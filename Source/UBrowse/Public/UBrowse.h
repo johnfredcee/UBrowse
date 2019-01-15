@@ -2,7 +2,14 @@
 
 #pragma once
 
+
+#include "AssetData.h"
+#include "ScopedTransaction.h"
+#include "EdGraph/EdGraphPin.h"
+#include "EdGraph/EdGraphNode.h"
+#include "GraphEditor.h"
 #include "EdGraphUtilities.h"
+#include "EdGraph/EdGraphNodeUtils.h"
 #include "ModuleManager.h"
 #include "Editor/PropertyEditor/Public/PropertyEditing.h"
 

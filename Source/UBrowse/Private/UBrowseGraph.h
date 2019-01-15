@@ -1,6 +1,8 @@
 #pragma once
 
 #include "GraphEditor.h"
+#include "EdGraph/EdGraph.h"
+#include "EdGraph/EdGraphNode.h"
 #include "UBrowseGraph.generated.h"
 
 UCLASS()

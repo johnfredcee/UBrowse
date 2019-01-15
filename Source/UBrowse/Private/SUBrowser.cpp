@@ -1,5 +1,7 @@
 #include "UBrowsePrivatePCH.h"
 
+#include "UnrealEd.h"
+#include "SourceCodeNavigation.h"
 #include "SlateBasics.h"
 #include "SlateExtras.h"
 
@@ -20,80 +22,9 @@
 #include "SUBrowsePanel.h"
 #include "SUBrowser.h"
 
-#define LOCTEXT_NAMESPACE "SUBrowser"
+#define LOCTEXT_NAMESPACE "SUBrowserMenu"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-class STestMenu : public SCompoundWidget
-{
-public:
-	SLATE_BEGIN_ARGS(STestMenu) {}
-	SLATE_END_ARGS()
-
-		/**
-		* Construct the widget
-		*
-		* @param InArgs   Declaration from which to construct the widget.
-		*/
-	void Construct(const FArguments& InArgs)
-	{
-
-		this->ChildSlot
-		[
-			SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush("Menu.Background"))
-			.Padding(FMargin(5))
-			[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("TestMenuButtonText00", "Option 00"))
-				.ToolTipText(LOCTEXT("TestMenuButtonToolTip00", "The first option text."))
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SAssignNew(PopupAnchor, SMenuAnchor)
-				.Placement(MenuPlacement_MenuRight)
-				.OnGetMenuContent(this, &STestMenu::OnGetContent)
-				[
-					SNew(SButton)
-					.Text(LOCTEXT("TestMenuButtonText01", "Option 01 >"))
-					.ToolTipText(LOCTEXT("TestMenuButtonToolTip01", "The first option text."))
-					.OnClicked(this, &STestMenu::OpenSubmenu)
-				]
-			]
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("TestMenuButtonText02", "Option 02"))
-			]
-			+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SButton)
-					.Text(LOCTEXT("TestMenuButtonText03", "Option 03"))
-				.ToolTipText(LOCTEXT("TestMenuButtonToolTip03", "The fourth option text."))
-				]
-			]
-		];
-	}
-
-	TSharedPtr<SMenuAnchor> PopupAnchor;
-	FReply OpenSubmenu()
-	{
-		PopupAnchor->SetIsOpen(!PopupAnchor->IsOpen());
-		return FReply::Handled();
-	}
-
-	TSharedRef<SWidget> OnGetContent() const
-	{
-		return SNew(STestMenu);
-	}
-};
-
 void SUBrowser::Construct(const FArguments& InArgs)
 {
 	Tag = FName(TEXT("UBrowseTag"));
@@ -231,6 +162,15 @@ void SUBrowser::Construct(const FArguments& InArgs)
 							.HAlignCell(HAlign_Left)
 							.HAlignHeader(HAlign_Left)
 							.VAlignCell(VAlign_Center)
+							+ SHeaderRow::Column("Number")
+							.OnSort(this, &SUBrowser::OnSortByChanged)
+							.SortMode(this, &SUBrowser::GetSortMode)
+							.DefaultLabel(LOCTEXT("SUBrowserNumberCol", "Number"))
+							.DefaultTooltip(LOCTEXT("SUBrowserNumberColTooltip", "Object Number"))
+							.FillWidth(0.2f)
+							.HAlignCell(HAlign_Center)
+							.HAlignHeader(HAlign_Center)
+							.VAlignCell(VAlign_Center)
 							+ SHeaderRow::Column("Class")
 							.OnSort(this, &SUBrowser::OnSortByChanged)
 							.SortMode(this, &SUBrowser::GetSortMode)
@@ -263,7 +203,9 @@ void SUBrowser::Construct(const FArguments& InArgs)
 						(
 							SNew(SHeaderRow)
 							+ SHeaderRow::Column("Name").DefaultLabel(LOCTEXT("SUBrowseObjectName", "Name"))
+							+ SHeaderRow::Column("Number").DefaultLabel(LOCTEXT("SUBrowseObjectNumber", "Number"))
 							+ SHeaderRow::Column("Class").DefaultLabel(LOCTEXT("SUBrowseObjectClass", "Class"))
+							+ SHeaderRow::Column("Id").DefaultLabel(LOCTEXT("SUBrowseObjectId", "Id"))
 						)
 					]
 				]
@@ -341,7 +283,19 @@ TSharedRef<SWidget> SUBrowser::MakeFilterMenu()
 
 	AddBoolFilter(
 		MenuBuilder,
-		LOCTEXT("OnlyListDefaultObjects", "Only List Default Objects"),
+		LOCTEXT("ShouldIncludeDefaultSubObjects", "Include Default Sub Objects"),
+		LOCTEXT("ShouldIncludeDefaultSubObjectsToolTip", "Should we include Default Sub Objects in the results?"),
+		&bShouldIncludeDefaultSubObjects);
+
+	AddBoolFilter(
+		MenuBuilder,
+		LOCTEXT("ShouldIncludeArchetypeObjects", "Include Archetyoe Objects"),
+		LOCTEXT("ShouldIncludeArchetypeObjectsToolTip", "Should we include Archetype Objects in the results?"),
+		&bShouldIncludeArchetypeObjects);
+
+	AddBoolFilter(
+		MenuBuilder,
+		LOCTEXT("OnlyListDefaultObjects", "Only List Default Objects (CDO)"),
 		LOCTEXT("OnlyListDefaultObjectsToolTip", ""),
 		&bOnlyListDefaultObjects);
 
@@ -402,7 +356,18 @@ void SUBrowser::RefreshList()
 			continue;
 		}
 
-		if (It->IsTemplate(RF_ClassDefaultObject) && (!bShouldIncludeDefaultObjects))
+		if (!It->IsTemplate(RF_DefaultSubObject) && (!bShouldIncludeDefaultSubObjects))
+		{
+			continue;
+		}
+
+		if (It->IsTemplate(RF_ArchetypeObject) && (!bShouldIncludeArchetypeObjects))
+		{
+			continue;
+		}
+
+
+		if (!It->IsTemplate(RF_ClassDefaultObject) && (bOnlyListDefaultObjects))
 		{
 			continue;
 		}
@@ -426,7 +391,7 @@ void SUBrowser::RefreshList()
 			}
 		}
 
-		if (FilterClass && !It->IsA(FilterClass))
+		if (FilterClass && (!It->GetClass()->IsChildOf(FilterClass)))
 		{
 			continue;
 		}
@@ -444,7 +409,8 @@ void SUBrowser::RefreshList()
 	if (SortBy == EQuerySortMode::ByID) {
 		struct FCompareObjectsByName
 		{
-			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const { 
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
+			{ 
 				return GetNameSafe(A->Object.Get()) < GetNameSafe(B->Object.Get());
 			}
 		};
@@ -454,11 +420,24 @@ void SUBrowser::RefreshList()
 	{
 		struct FCompareObjectsByClass
 		{
-			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const {
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
+			{
 				return GetNameSafe(A->Object->GetClass()) < GetNameSafe(B->Object->GetClass());
 			}
 		};
 		Panel.LiveObjects.Sort( FCompareObjectsByClass() );
+	}
+	if (SortBy == EQuerySortMode::ByNumber)
+	{
+		struct FCommpareObjectsByNumber
+		{
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
+			{
+				int32 NumberA = A->Object.Get() ? A->Object.Get()->GetFName().GetNumber() : 0;
+				int32 NumberB = B->Object.Get() ? B->Object.Get()->GetFName().GetNumber() : 0;
+				return NumberA < NumberB;
+			}
+		};
 	}
 	ObjectListView->RequestListRefresh();
 }
@@ -496,11 +475,12 @@ FReply SUBrowser::OnClassSelectionClicked()
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
 	Options.bEnableClassDynamicLoading = true;
-	Options.bShowDisplayNames = true;
+	Options.bShowDisplayNames = false;
 	Options.bShowNoneOption = true;
 	Options.bShowObjectRootClass = true;
+	Options.bShowUnloadedBlueprints = true;
 
-	UClass* ChosenClass = nullptr;
+	UClass* ChosenClass = FilterClass;
 	const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, ChosenClass, UObject::StaticClass());
 	if (bPressedOk)
 	{
@@ -552,6 +532,10 @@ void SUBrowser::OnSortByChanged(const EColumnSortPriority::Type SortPriority, co
 	{
 		SortBy = EQuerySortMode::ByID;
 	}
+	else if (ColumnName == "Number")
+	{
+		SortBy = EQuerySortMode::ByNumber;
+	}
 	RefreshList();
 }
 
@@ -602,24 +586,25 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				.HAlign(HAlign_Left)
 				.Padding(3)
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(NameText))
-					.ToolTipText(FText::FromString(RowName))
-					.Font(IDetailLayoutBuilder::GetDetailFont())
-				]
-				+ SHorizontalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoWidth()
-				[
 					SNew(SButton)
 					.OnClicked_Lambda(OnClickedLambda)
 					.Content()
 					[
 						SNew(STextBlock)
-						.Text(FText::FromString(ValueText))
-						.ToolTipText(FText::FromString(TooltipText))
+						.Text(FText::FromString(NameText))
+						.ToolTipText(FText::FromString(RowName))
 						.Font(IDetailLayoutBuilder::GetDetailFont())
+
 					]
+				]
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(ValueText))
+					.ToolTipText(FText::FromString(TooltipText))
+					.Font(IDetailLayoutBuilder::GetDetailFont())
 				]
 			];
 		}
@@ -670,6 +655,74 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		}
 	};
 
+	struct ObjectFlagBuilder
+	{
+		/**
+		* Maps object flag to human-readable string.
+		*/
+		class FObjectFlag
+		{
+		public:
+			EObjectFlags	ObjectFlag;
+			const TCHAR*	FlagName;
+			FObjectFlag(EObjectFlags InObjectFlag, const TCHAR* InFlagName)
+				: ObjectFlag(InObjectFlag)
+				, FlagName(InFlagName)
+			{}
+		};
+
+		/**
+		* Initializes the singleton list of object flags.
+		*/
+		static TArray<FObjectFlag> PrivateInitObjectFlagList()
+		{
+			TArray<FObjectFlag> ObjectFlagList;
+#ifdef	DECLARE_OBJECT_FLAG
+#error DECLARE_OBJECT_FLAG already defined
+#else
+#define DECLARE_OBJECT_FLAG( ObjectFlag ) ObjectFlagList.Add( FObjectFlag( RF_##ObjectFlag, TEXT(#ObjectFlag) ) );
+			DECLARE_OBJECT_FLAG(ClassDefaultObject)
+			DECLARE_OBJECT_FLAG(DefaultSubObject)
+			DECLARE_OBJECT_FLAG(LoadCompleted)
+			DECLARE_OBJECT_FLAG(ArchetypeObject)
+			DECLARE_OBJECT_FLAG(Transactional)
+			DECLARE_OBJECT_FLAG(Public)
+			DECLARE_OBJECT_FLAG(TagGarbageTemp)
+			DECLARE_OBJECT_FLAG(NeedLoad)
+			DECLARE_OBJECT_FLAG(Transient)
+			DECLARE_OBJECT_FLAG(Standalone)
+			DECLARE_OBJECT_FLAG(BeginDestroyed)
+			DECLARE_OBJECT_FLAG(FinishDestroyed)
+			DECLARE_OBJECT_FLAG(NeedPostLoad)
+#undef DECLARE_OBJECT_FLAG
+#endif
+			return ObjectFlagList;
+		}
+
+		/**
+		* Dumps object flags from the selected objects to debugf.
+		*/
+		static FString PrintObjectFlags(UObject* Object)
+		{
+			static TArray<FObjectFlag> SObjectFlagList = PrivateInitObjectFlagList();
+
+			if (Object)
+			{
+				FString Buf;
+				for (int32 FlagIndex = 0; FlagIndex < SObjectFlagList.Num(); ++FlagIndex)
+				{
+					const FObjectFlag& CurFlag = SObjectFlagList[FlagIndex];
+					if (Object->HasAnyFlags(CurFlag.ObjectFlag))
+					{
+						Buf += FString::Printf(TEXT("%s "), CurFlag.FlagName);
+					}
+				}
+				return Buf;
+			}
+			return TEXT("None");
+		}
+	};
+
 	const IDetailsView&  View = DetailLayout.GetDetailsView();
 	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView().GetSelectedObjects();
 	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Uncommon);
@@ -683,13 +736,16 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 	];
 	for (auto iObject : Objects) 
 	{
+		bool bIsClass = false;
 		UObject* Obj = iObject.Get();
 		UClass*  Class = Cast<UClass>(Obj);
 		if (Class == nullptr) {
 			Class = Obj->GetClass();
+			bIsClass = false;
 		}
 		else {
 			Obj = Class->GetDefaultObject();
+			bIsClass = true;
 		}
 		BoolString BoolProp;
 		UBrowseRowBuilder Builder(View, ObjectCategory, ObjectGroup); 
@@ -701,6 +757,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		if (DetailedInfo.IsEmpty())
 			DetailedInfo = PathName;
 		Builder(TEXT("Path Name"), TEXT("Path Name"), PathName, DetailedInfo);
+		Builder(TEXT("Flags"), TEXT("Flags"), ObjectFlagBuilder::PrintObjectFlags(Obj), TEXT("Object Flags"));
 		FString IsNativeText = BoolProp(Obj->IsNative(), TEXT("Native"));
 		Builder(TEXT("Native"), TEXT("Native"), IsNativeText, IsNativeText);
 		if (Class) {
@@ -710,6 +767,12 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			if (CDO) {
 				auto CDOName = GetNameSafe(CDO);
 				Builder(TEXT("CDO"), TEXT("CDO"), CDOName, GetFullNameSafe(CDO), CDO);
+			}
+			FString ClassHeaderPath;
+			if (FSourceCodeNavigation::FindClassHeaderPath(Class, ClassHeaderPath) && IFileManager::Get().FileSize(*ClassHeaderPath) != INDEX_NONE)
+			{
+				ClassHeaderPath = FPaths::GetCleanFilename(ClassHeaderPath);
+				Builder(TEXT("CPPHeader"), TEXT("CPPHeader"), ClassHeaderPath, TEXT("Class Header Path"));
 			}
 		}
 		UObject* Outer = Obj->GetOuter();
@@ -736,7 +799,13 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			auto CPPType = Property->GetCPPType();
 			auto PropertyName = Property->GetName();
 			UClass* Owner = PropIt->GetOwnerClass();
-			ClassBuilder(PropertyName, CPPType, CPPName, GetNameSafe(Owner), Property);
+			uint8* SourceAddr = Property->ContainerPtrToValuePtr<uint8>(Obj);
+			if (SourceAddr != nullptr)
+			{
+				FString SourceValue;
+				Property->ExportText_Direct(SourceValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
+				ClassBuilder(PropertyName, CPPName, SourceValue, CPPType, Property);
+			}
 		}
 /*
 		} else {

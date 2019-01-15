@@ -25,6 +25,10 @@ UBrowseGraph::UBrowseGraph(const FObjectInitializer& ObjectInitializer)
 
 void UBrowseGraph::RefreshGraph(UObject* pRoot)
 {
+	constexpr int32 nodeYSpacing = 150;
+	constexpr int32 nodeYStart = 50;
+	constexpr int32 nodeXPos = 50;
+
 	RemoveAllNodes();
 	// walk from GEngine
 	TArray<UObject*> Outers;
@@ -36,20 +40,92 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 		Outers.Push(Outermost);
 		Outermost = Outermost->GetOuter();
 	}
-	uint32 NodeY = 50;
+	uint32 NodeY = nodeYStart;
 	int32 OuterCount = Outers.Num() - 1;
-	FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
-	UBrowseNode*  ThisNode = NodeBuilder.CreateNode(false);
-	ThisNode->SetupNode(FIntPoint(50, NodeY), Outers[OuterCount]);
-	NodeBuilder.Finalize();
-	UBrowseNode*  PrevNode = ThisNode;
-	for (int32 i = OuterCount-1; i >= 0; i--) {
-		NodeY += 100;
+	//FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
+	UBrowseNode*  ThisNode; // = NodeBuilder.CreateNode(false);
+	//ThisNode->SetupNode(FIntPoint(nodeXPos, NodeY), Outers[OuterCount]);
+	//NodeBuilder.Finalize();
+	UBrowseNode*  PrevNode = nullptr;
+	for (int32 i = OuterCount; i >= 0; i--) {
 		FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
+		UObject *NodeObject = Outers[i];
 		ThisNode = NodeBuilder.CreateNode(false);
-		ThisNode->SetupNode(FIntPoint(50, NodeY), Outers[i]);
+		ThisNode->SetupNode(FIntPoint(nodeXPos, NodeY), NodeObject);
 		NodeBuilder.Finalize();
-		PrevNode->GetChildrenPin()->MakeLinkTo(ThisNode->GetParentPin());
+		if (PrevNode != nullptr)
+		{
+			PrevNode->GetChildrenPin()->MakeLinkTo(ThisNode->GetParentPin());
+		}
+		if (!ThisNode->GetCDOPin()->bHidden)
+		{
+			UClass* NodeClass = Cast<UClass>(NodeObject);
+			if (NodeClass)
+			{
+				TArray<UEdGraphNode*> Siblings;
+				Siblings.Add(ThisNode);
+				FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
+				UObject *NodeCDO = NodeClass->ClassDefaultObject;
+				FGraphNodeCreator<UBrowseNode> CDONodeBuilder(*this);
+				auto CDONode = CDONodeBuilder.CreateNode(false);
+				CDONode->SetupNode(FIntPoint(nodeXPos + Bounds.Width() + 250, NodeY), NodeCDO);
+				CDONodeBuilder.Finalize();
+				ThisNode->GetCDOPin()->MakeLinkTo(CDONode->GetChildrenPin());
+				CDONode->GetChildrenPin()->PinName = TEXT("Class");
+			}
+		}
+		if (!ThisNode->GetOwnerPin()->bHidden)
+		{
+			UActorComponent *Component = Cast<UActorComponent>(NodeObject);
+			if (Component)
+			{
+				TArray<UEdGraphNode*> Siblings;
+				Siblings.Add(ThisNode);
+				FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
+				AActor* NodeOwner = Component->GetOwner();
+				FGraphNodeCreator<UBrowseNode> OwnerNodeBuilder(*this);
+				auto OwnerNode = OwnerNodeBuilder.CreateNode(false);
+				OwnerNode->SetupNode(FIntPoint(nodeXPos - Bounds.Width() - 350, NodeY), NodeOwner);
+				OwnerNodeBuilder.Finalize();
+				ThisNode->GetOwnerPin()->MakeLinkTo(OwnerNode->GetChildrenPin());
+				OwnerNode->GetChildrenPin()->PinName = TEXT("Actor");
+			}
+		}
+		if (!ThisNode->GetGeneratedByPin()->bHidden)
+		{
+			UBlueprintGeneratedClass *NodeBPClass = Cast<UBlueprintGeneratedClass>(NodeObject);
+			if (NodeBPClass)
+			{
+				TArray<UEdGraphNode*> Siblings;
+				Siblings.Add(ThisNode);
+				FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
+				UObject* BP= NodeBPClass->ClassGeneratedBy;
+				FGraphNodeCreator<UBrowseNode> BPNodeBuilder(*this);
+				auto BPNode = BPNodeBuilder.CreateNode(false);
+				BPNode->SetupNode(FIntPoint(nodeXPos - Bounds.Width() - 350, NodeY), BP);
+				BPNodeBuilder.Finalize();
+				ThisNode->GetGeneratedByPin()->MakeLinkTo(BPNode->GetChildrenPin());
+				BPNode->GetChildrenPin()->PinName = TEXT("GeneratedBy");
+			}
+		}
+		if (!ThisNode->GetGeneratesPin()->bHidden)
+		{
+			UBlueprint* BP = Cast<UBlueprint>(NodeObject);
+			if (BP)
+			{
+				TArray<UEdGraphNode*> Siblings;
+				Siblings.Add(ThisNode);
+				FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
+				UClass* GeneratedClass = BP->GeneratedClass.Get();
+				FGraphNodeCreator<UBrowseNode> GeneratedNodeBuilder(*this);
+				auto GeneratedNode = GeneratedNodeBuilder.CreateNode(false);
+				GeneratedNode->SetupNode(FIntPoint(nodeXPos + Bounds.Width() + 250, NodeY), GeneratedClass);
+				GeneratedNodeBuilder.Finalize();
+				ThisNode->GetGeneratesPin()->MakeLinkTo(GeneratedNode->GetChildrenPin());
+				GeneratedNode->GetChildrenPin()->PinName = TEXT("Generates");
+			}
+		}
+
 		/*
 		TArray<UObject*> Results;
 		GetObjectsWithOuter(PrevNode->GetUObject(), Results, false);
@@ -74,6 +150,7 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 			Siblings.Push(SiblingNode);
 		}
 		*/
+		NodeY += nodeYSpacing;
 		PrevNode = ThisNode;
 	}
 }

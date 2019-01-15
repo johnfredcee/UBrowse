@@ -8,7 +8,8 @@ namespace EQuerySortMode
 	enum Type
 	{
 		ByID,
-		ByType
+		ByType,
+		ByNumber
 	};
 }
 
@@ -90,6 +91,8 @@ private:
 	FString FilterString;
 	UClass* FilterClass;
 	bool bShouldIncludeDefaultObjects;	
+	bool bShouldIncludeDefaultSubObjects;
+	bool bShouldIncludeArchetypeObjects;
 	bool bOnlyListDefaultObjects;
 	bool bOnlyListRootObjects;
 	bool bOnlyListGCObjects;

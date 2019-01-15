@@ -1,6 +1,7 @@
 
 #include "UBrowsePrivatePCH.h"
 #include "GraphEditorSettings.h"
+#include "EdGraph/EdGraphNode.h"
 #include "EditorClassUtils.h"
 #include "UBrowseNode.h"
 #include "SUBrowseNode.h"
@@ -15,7 +16,41 @@ void SUBrowseNode::Construct(const FArguments& InArgs, UBrowseNode* InNode)
 
 FSlateColor SUBrowseNode::GetNodeTitleColor() const
 {
-	return GetDefault<UGraphEditorSettings>()->FunctionTerminatorNodeTitleColor;
+	const UObject* Obj = static_cast<UBrowseNode*>(GraphNode)->GetUObject();
+	if (Obj == nullptr)
+	{
+		return GetErrorColor();
+	}
+	if (Obj->IsA(UClass::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->ClassPinTypeColor;
+	}
+	UClass* Class = Obj->GetClass();
+	if (Class->IsChildOf(UBlueprint::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->StructPinTypeColor;
+	}
+	if (Class->IsChildOf(UBlueprintGeneratedClass::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->AssetPinTypeColor;
+	}
+	if (Class->IsChildOf(UBlueprint::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->AssetClassPinTypeColor;
+	}
+	if (Class->IsChildOf(UPackage::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->WildcardPinTypeColor;
+	}
+	if (Class->IsChildOf(ULevel::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->BooleanPinTypeColor;
+	}
+	if (Class->IsChildOf(AActor::StaticClass()))
+	{
+		return GetDefault<UGraphEditorSettings>()->VectorPinTypeColor;
+	}
+	return GetDefault<UGraphEditorSettings>()->ObjectPinTypeColor;
 }
 
 
@@ -134,7 +169,7 @@ void SUBrowseNode::UpdateGraphNode()
 						[
 							// LEFT
 							SNew(SBox)
-							.WidthOverride(80)
+							.WidthOverride(120)
 							[
 								SAssignNew(LeftNodeBox, SVerticalBox)
 							]
@@ -164,7 +199,7 @@ void SUBrowseNode::UpdateGraphNode()
 						[
 							// RIGHT
 							SNew(SBox)
-							.WidthOverride(80)
+							.WidthOverride(120)
 							[
 								SAssignNew(RightNodeBox, SVerticalBox)
 							]

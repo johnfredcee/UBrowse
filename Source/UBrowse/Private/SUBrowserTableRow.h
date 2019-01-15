@@ -38,14 +38,16 @@ public:
 
 		if (UObject* Obj = InArgs._Object->Object.Get())
 		{
-			Name = FText::FromString(Obj->GetName());
+			Name = FText::FromString(Obj ? Obj->GetFName().ToString() : FString("None"));
 			ClassName = Obj->GetClass()->GetDisplayNameText();
 			Package = FText::FromString(Obj->GetFullName());
 			HighlightText = InArgs._HighlightText;
 			OuterName = Obj->GetOuter() != nullptr ? FText::FromString(Obj->GetOuter()->GetName()) : LOCTEXT("NoOuter", "None");			
 			// Get selection icon based on actor(s) classes and add before the selection label
 			ClassIcon = FClassIconFinder::FindIconForClass(Obj->GetClass());
-		}
+			Number = Obj ? Obj->GetFName().GetNumber() : 0;
+			Id = Obj ? Obj->GetUniqueID() : 0;
+		}	
 
 		SMultiColumnTableRow<TSharedPtr<int32> >::Construct(FSuperRowType::FArguments(), InOwnerTableView);
 	}
@@ -88,6 +90,16 @@ public:
 		{
 			return SNew(STextBlock)
 				.Text(OuterName);
+		} 
+		else if (ColumnName == "Number")
+		{
+			return SNew(STextBlock)
+				.Text(FText::AsNumber(Number));
+		}
+		else if (ColumnName == "Id")
+		{
+			return SNew(STextBlock)
+				.Text(FText::AsNumber(Id));
 		}
 
 		return SNullWidget::NullWidget;
@@ -106,6 +118,8 @@ private:
 	FText Package;
 	FText OuterName;
 	FText HighlightText;
+	int32 Number;
+	int32 Id;
 };
 
 

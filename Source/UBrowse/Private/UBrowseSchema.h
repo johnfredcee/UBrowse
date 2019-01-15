@@ -38,12 +38,10 @@ class UBrowseSchema : public UEdGraphSchema
 
 
 	//~ Begin EdGraphSchema Interface
-	/** @return     The type of graph (function vs. ubergraph) that this that TestEdGraph is. */
-	//@TODO: This is too K2-specific to be included in EdGraphSchema and should be refactored
-		virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override { return GT_Ubergraph; }
+	virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override { return GT_Ubergraph; }
 
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-	//virtual void GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const override;
+	virtual void GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const override;
 	//~ End EdGraphSchema Interface
 
 };
