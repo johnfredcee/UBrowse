@@ -27,6 +27,13 @@
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SUBrowser::Construct(const FArguments& InArgs)
 {
+	bShouldIncludeClassDefaultObjects = false; 
+	bShouldIncludeDefaultSubObjects = false;
+	bShouldIncludeArchetypeObjects = false;
+	bOnlyListRootObjects = false;
+	bIncludeTransient = false;
+	bOnlyListGCObjects = false;
+
 	Tag = FName(TEXT("UBrowseTag"));
 	SortBy = EQuerySortMode::ByID;
 	SortDirection = EColumnSortMode::Descending;
@@ -57,198 +64,198 @@ void SUBrowser::Construct(const FArguments& InArgs)
 	FOnGetDetailCustomizationInstance UBrowseLiteralDetails = FOnGetDetailCustomizationInstance::CreateStatic(&FBrowserObject::MakeInstance);
 	PropertyView->RegisterInstancedCustomPropertyLayout(UObject::StaticClass(), UBrowseLiteralDetails);
 	ChildSlot
-	[
-		SNew(SSplitter)
-		.Orientation(EOrientation::Orient_Horizontal)
+		[
+			SNew(SSplitter)
+			.Orientation(EOrientation::Orient_Horizontal)
 		/* Object / Class selection list */
 		+ SSplitter::Slot()
 		.Value(3)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-			[
-				SNew(SVerticalBox)
-				/* Top bar of object viewer */
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SButton)
-						.OnClicked(this, &SUBrowser::OnClassSelectionClicked)
-						[
-							SNew(STextBlock)
-							.Text(this, &SUBrowser::GetFilterClassText)
-							.ToolTipText(LOCTEXT("ClassName", "Class Filter"))
-						]
-					]
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
-					[
-						SNew(SEditableTextBox)
-						.HintText(LOCTEXT("ObjectName", "Object Name Filter"))
-						.OnTextCommitted(this, &SUBrowser::OnNewHostTextCommited)
-						.OnTextChanged(this, &SUBrowser::OnNewHostTextCommited, ETextCommit::Default)
-					]
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SComboButton)
-						.ComboButtonStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Style")
-						.ForegroundColor(FLinearColor::White)
-						.ContentPadding(0)
-						.ToolTipText(LOCTEXT("AddFilterToolTip", "Add a search filter."))
-						.OnGetMenuContent(this, &SUBrowser::MakeFilterMenu)
-						.HasDownArrow(true)
-						.ContentPadding(FMargin(1, 0))
-						.ButtonContent()
-						[
-							SNew(SHorizontalBox)
-							+ SHorizontalBox::Slot()
-							.AutoWidth()
-							[
-								SNew(STextBlock)
-								.TextStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Text")
-								.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
-								.Text(FEditorFontGlyphs::Filter)
-							]
-							+ SHorizontalBox::Slot()
-							.AutoWidth()
-							.Padding(2, 0, 0, 0)
-							[
-								SNew(STextBlock)
-								.TextStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Text")
-								.Text(LOCTEXT("Filters", "Filters"))
-							]
-						]
-					]
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						SNew(SButton)
-						.OnClicked(this, &SUBrowser::OnCollectGarbage)
-						[
-							SNew(STextBlock)
-							.Text(LOCTEXT("CollectGarbage", "Collect Garbage"))
-						]
-					]
-				]
-				/* The actual list of objects */
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				[
-					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-					.Padding(FMargin(0.0f, 4.0f))
-					[
-						SAssignNew(ObjectListView, SListView< TSharedPtr<FBrowserObject> >)
-						.ItemHeight(24.0f)
-						.ListItemsSource(&(this->GetLiveObjects()))
-						.SelectionMode(ESelectionMode::Single)
-						.OnGenerateRow(this, &SUBrowser::OnGenerateObjectListRow)
-						.OnSelectionChanged(this, &SUBrowser::OnObjectListSelectionChanged)
-						.HeaderRow
-						(
-							SNew(SHeaderRow)
-							+ SHeaderRow::Column("Name")
-							.OnSort(this, &SUBrowser::OnSortByChanged)
-							.SortMode(this, &SUBrowser::GetSortMode)
-							.DefaultLabel(LOCTEXT("SUBrowserNameCol", "Name"))
-							.DefaultTooltip(LOCTEXT("SUBrowserNameColTooltip", "Object Name"))
-							.FillWidth(0.2f)
-							.HAlignCell(HAlign_Left)
-							.HAlignHeader(HAlign_Left)
-							.VAlignCell(VAlign_Center)
-							+ SHeaderRow::Column("Number")
-							.OnSort(this, &SUBrowser::OnSortByChanged)
-							.SortMode(this, &SUBrowser::GetSortMode)
-							.DefaultLabel(LOCTEXT("SUBrowserNumberCol", "Number"))
-							.DefaultTooltip(LOCTEXT("SUBrowserNumberColTooltip", "Object Number"))
-							.FillWidth(0.2f)
-							.HAlignCell(HAlign_Center)
-							.HAlignHeader(HAlign_Center)
-							.VAlignCell(VAlign_Center)
-							+ SHeaderRow::Column("Class")
-							.OnSort(this, &SUBrowser::OnSortByChanged)
-							.SortMode(this, &SUBrowser::GetSortMode)
-							.DefaultLabel(LOCTEXT("SUBrowserClassCol", "Class"))
-							.DefaultTooltip(LOCTEXT("SUBrowserClassColTooltip", "Object Class"))
-							.FillWidth(0.2f)
-							.HAlignCell(HAlign_Left)
-							.HAlignHeader(HAlign_Left)
-							.VAlignCell(VAlign_Center)
-						)
-					]
-				]
-				/* History Viewer */
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				[
-					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-					.Padding(FMargin(0.0f, 4.0f))
-					[
-						SAssignNew(ObjectHistoryView, SListView< TSharedPtr< FBrowserObject > >)
-						.ItemHeight(24)
-						.ListItemsSource(&(this->GetCurrentHistoryList()))
-						// Currently, we only need single-selection for this tree
-						.SelectionMode(ESelectionMode::Single)
-						.ClearSelectionOnClick( false )
-						.OnGenerateRow(this, &SUBrowser::OnGenerateHistoryRow)
-						.OnSelectionChanged(this, &SUBrowser::OnHistorySelectionChanged)
-						.HeaderRow
-						(
-							SNew(SHeaderRow)
-							+ SHeaderRow::Column("Name").DefaultLabel(LOCTEXT("SUBrowseObjectName", "Name"))
-							+ SHeaderRow::Column("Number").DefaultLabel(LOCTEXT("SUBrowseObjectNumber", "Number"))
-							+ SHeaderRow::Column("Class").DefaultLabel(LOCTEXT("SUBrowseObjectClass", "Class"))
-							+ SHeaderRow::Column("Id").DefaultLabel(LOCTEXT("SUBrowseObjectId", "Id"))
-						)
-					]
-				]
-			]
+		.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		[
+			SNew(SVerticalBox)
+			/* Top bar of object viewer */
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.OnClicked(this, &SUBrowser::OnClassSelectionClicked)
+		[
+			SNew(STextBlock)
+			.Text(this, &SUBrowser::GetFilterClassText)
+		.ToolTipText(LOCTEXT("ClassName", "Class Filter"))
 		]
-		/* The actual browse panel */
-		+ SSplitter::Slot()
+		]
+	+ SHorizontalBox::Slot()
+		.FillWidth(1.0f)
+		[
+			SNew(SEditableTextBox)
+			.HintText(LOCTEXT("ObjectName", "Object Name Filter"))
+		.OnTextCommitted(this, &SUBrowser::OnNewHostTextCommited)
+		.OnTextChanged(this, &SUBrowser::OnNewHostTextCommited, ETextCommit::Default)
+		]
+	+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SComboButton)
+			.ComboButtonStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Style")
+		.ForegroundColor(FLinearColor::White)
+		.ContentPadding(0)
+		.ToolTipText(LOCTEXT("AddFilterToolTip", "Add a search filter."))
+		.OnGetMenuContent(this, &SUBrowser::MakeFilterMenu)
+		.HasDownArrow(true)
+		.ContentPadding(FMargin(1, 0))
+		.ButtonContent()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(STextBlock)
+			.TextStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Text")
+		.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
+		.Text(FEditorFontGlyphs::Filter)
+		]
+	+ SHorizontalBox::Slot()
+		.AutoWidth()
+		.Padding(2, 0, 0, 0)
+		[
+			SNew(STextBlock)
+			.TextStyle(FEditorStyle::Get(), "ContentBrowser.Filters.Text")
+		.Text(LOCTEXT("Filters", "Filters"))
+		]
+		]
+		]
+	+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.OnClicked(this, &SUBrowser::OnCollectGarbage)
+		[
+			SNew(STextBlock)
+			.Text(LOCTEXT("CollectGarbage", "Collect Garbage"))
+		]
+		]
+		]
+	/* The actual list of objects */
+	+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		[
+			SNew(SBorder)
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		.Padding(FMargin(0.0f, 4.0f))
+		[
+			SAssignNew(ObjectListView, SListView< TSharedPtr<FBrowserObject> >)
+			.ItemHeight(24.0f)
+		.ListItemsSource(&(this->GetLiveObjects()))
+		.SelectionMode(ESelectionMode::Single)
+		.OnGenerateRow(this, &SUBrowser::OnGenerateObjectListRow)
+		.OnSelectionChanged(this, &SUBrowser::OnObjectListSelectionChanged)
+		.HeaderRow
+		(
+			SNew(SHeaderRow)
+			+ SHeaderRow::Column("Name")
+			.OnSort(this, &SUBrowser::OnSortByChanged)
+			.SortMode(this, &SUBrowser::GetSortMode)
+			.DefaultLabel(LOCTEXT("SUBrowserNameCol", "Name"))
+			.DefaultTooltip(LOCTEXT("SUBrowserNameColTooltip", "Object Name"))
+			.FillWidth(0.2f)
+			.HAlignCell(HAlign_Left)
+			.HAlignHeader(HAlign_Left)
+			.VAlignCell(VAlign_Center)
+			+ SHeaderRow::Column("Number")
+			.OnSort(this, &SUBrowser::OnSortByChanged)
+			.SortMode(this, &SUBrowser::GetSortMode)
+			.DefaultLabel(LOCTEXT("SUBrowserNumberCol", "Number"))
+			.DefaultTooltip(LOCTEXT("SUBrowserNumberColTooltip", "Object Number"))
+			.FillWidth(0.2f)
+			.HAlignCell(HAlign_Center)
+			.HAlignHeader(HAlign_Center)
+			.VAlignCell(VAlign_Center)
+			+ SHeaderRow::Column("Class")
+			.OnSort(this, &SUBrowser::OnSortByChanged)
+			.SortMode(this, &SUBrowser::GetSortMode)
+			.DefaultLabel(LOCTEXT("SUBrowserClassCol", "Class"))
+			.DefaultTooltip(LOCTEXT("SUBrowserClassColTooltip", "Object Class"))
+			.FillWidth(0.2f)
+			.HAlignCell(HAlign_Left)
+			.HAlignHeader(HAlign_Left)
+			.VAlignCell(VAlign_Center)
+		)
+		]
+		]
+	/* History Viewer */
+	+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		[
+			SNew(SBorder)
+			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		.Padding(FMargin(0.0f, 4.0f))
+		[
+			SAssignNew(ObjectHistoryView, SListView< TSharedPtr< FBrowserObject > >)
+			.ItemHeight(24)
+		.ListItemsSource(&(this->GetCurrentHistoryList()))
+		// Currently, we only need single-selection for this tree
+		.SelectionMode(ESelectionMode::Single)
+		.ClearSelectionOnClick(false)
+		.OnGenerateRow(this, &SUBrowser::OnGenerateHistoryRow)
+		.OnSelectionChanged(this, &SUBrowser::OnHistorySelectionChanged)
+		.HeaderRow
+		(
+			SNew(SHeaderRow)
+			+ SHeaderRow::Column("Name").DefaultLabel(LOCTEXT("SUBrowseObjectName", "Name"))
+			+ SHeaderRow::Column("Number").DefaultLabel(LOCTEXT("SUBrowseObjectNumber", "Number"))
+			+ SHeaderRow::Column("Class").DefaultLabel(LOCTEXT("SUBrowseObjectClass", "Class"))
+			+ SHeaderRow::Column("Id").DefaultLabel(LOCTEXT("SUBrowseObjectId", "Id"))
+		)
+		]
+		]
+		]
+		]
+	/* The actual browse panel */
+	+ SSplitter::Slot()
 		.Value(8)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
-			[
-				SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
-					[
-						SAssignNew(UBrowseSwitcher, SWidgetSwitcher)
-						.WidgetIndex(0)
-						+SWidgetSwitcher::Slot()
-						.HAlign(HAlign_Fill)
-						.VAlign(VAlign_Fill)
-						[
-							FirstSUBrowsePanel.ToSharedRef()
-						]
-					]
-				]
-			]
+		.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+		[
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+		.FillWidth(1.0f)
+		[
+			SAssignNew(UBrowseSwitcher, SWidgetSwitcher)
+			.WidgetIndex(0)
+		+ SWidgetSwitcher::Slot()
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Fill)
+		[
+			FirstSUBrowsePanel.ToSharedRef()
 		]
-		+ SSplitter::Slot()
+		]
+		]
+		]
+		]
+	+ SSplitter::Slot()
 		.Value(2)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			[
-				PropertyView.ToSharedRef()
-			]
+		[
+			PropertyView.ToSharedRef()
 		]
-	];
+		]
+		];
 };
 
 
@@ -277,9 +284,9 @@ TSharedRef<SWidget> SUBrowser::MakeFilterMenu()
 
 	AddBoolFilter(
 		MenuBuilder,
-		LOCTEXT("ShouldIncludeDefaultObjects", "Include Default Objects (CDO)"),
-		LOCTEXT("ShouldIncludeDefaultObjectsToolTip", "Should we include Class Default Objects in the results?"),
-		&bShouldIncludeDefaultObjects);
+		LOCTEXT("ShouldIncludeClassDefaultObjects", "Include Default Objects (CDO)"),
+		LOCTEXT("ShouldIncludeClassDefaultObjectsToolTip", "Should we include Class Default Objects in the results?"),
+		&bShouldIncludeClassDefaultObjects);
 
 	AddBoolFilter(
 		MenuBuilder,
@@ -292,12 +299,6 @@ TSharedRef<SWidget> SUBrowser::MakeFilterMenu()
 		LOCTEXT("ShouldIncludeArchetypeObjects", "Include Archetyoe Objects"),
 		LOCTEXT("ShouldIncludeArchetypeObjectsToolTip", "Should we include Archetype Objects in the results?"),
 		&bShouldIncludeArchetypeObjects);
-
-	AddBoolFilter(
-		MenuBuilder,
-		LOCTEXT("OnlyListDefaultObjects", "Only List Default Objects (CDO)"),
-		LOCTEXT("OnlyListDefaultObjectsToolTip", ""),
-		&bOnlyListDefaultObjects);
 
 	AddBoolFilter(
 		MenuBuilder,
@@ -348,29 +349,25 @@ void SUBrowser::RefreshList()
 
 	Panel.LiveObjects.Reset();
 
-	for (FObjectIterator It; It; ++It)
+	EObjectFlags ExclusionFlags{ RF_NoFlags };
+
+	if (!bShouldIncludeDefaultSubObjects)
 	{
+		ExclusionFlags |= RF_DefaultSubObject;
+	}
 
-		if (!It->IsTemplate(RF_ClassDefaultObject) && (bOnlyListDefaultObjects))
-		{
-			continue;
-		}
+	if (!bShouldIncludeArchetypeObjects)
+	{
+		ExclusionFlags |= RF_ArchetypeObject;
+	}
 
-		if (!It->IsTemplate(RF_DefaultSubObject) && (!bShouldIncludeDefaultSubObjects))
-		{
-			continue;
-		}
+	if (!bShouldIncludeClassDefaultObjects)
+	{
+		ExclusionFlags |= RF_ClassDefaultObject;
+	}
 
-		if (It->IsTemplate(RF_ArchetypeObject) && (!bShouldIncludeArchetypeObjects))
-		{
-			continue;
-		}
-
-
-		if (!It->IsTemplate(RF_ClassDefaultObject) && (bOnlyListDefaultObjects))
-		{
-			continue;
-		}
+	for (TObjectIterator<UObject> It(ExclusionFlags); It; ++It)
+	{
 
 		if (bOnlyListGCObjects && GUObjectArray.IsDisregardForGC(*It))
 		{
@@ -391,10 +388,11 @@ void SUBrowser::RefreshList()
 			}
 		}
 
-		if (FilterClass && (!It->GetClass()->IsChildOf(FilterClass)))
+		if ((FilterClass != nullptr) && (!It->GetClass()->IsChildOf(FilterClass)))
 		{
 			continue;
 		}
+
 
 		if (!FilterString.IsEmpty() && !It->GetName().Contains(FilterString))
 		{
@@ -406,32 +404,33 @@ void SUBrowser::RefreshList()
 
 		Panel.LiveObjects.Add(NewObject);
 	}
+
 	if (SortBy == EQuerySortMode::ByID) {
 		struct FCompareObjectsByName
 		{
-			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
-			{ 
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const
+			{
 				return GetNameSafe(A->Object.Get()) < GetNameSafe(B->Object.Get());
 			}
 		};
-		Panel.LiveObjects.Sort( FCompareObjectsByName() );
-	}	
+		Panel.LiveObjects.Sort(FCompareObjectsByName());
+	}
 	if (SortBy == EQuerySortMode::ByType)
 	{
 		struct FCompareObjectsByClass
 		{
-			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const
 			{
 				return GetNameSafe(A->Object->GetClass()) < GetNameSafe(B->Object->GetClass());
 			}
 		};
-		Panel.LiveObjects.Sort( FCompareObjectsByClass() );
+		Panel.LiveObjects.Sort(FCompareObjectsByClass());
 	}
 	if (SortBy == EQuerySortMode::ByNumber)
 	{
 		struct FCommpareObjectsByNumber
 		{
-			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const 
+			FORCEINLINE bool operator()(const TSharedPtr< FBrowserObject > A, const TSharedPtr< FBrowserObject > B) const
 			{
 				int32 NumberA = A->Object.Get() ? A->Object.Get()->GetFName().GetNumber() : 0;
 				int32 NumberB = B->Object.Get() ? B->Object.Get()->GetFName().GetNumber() : 0;
@@ -554,9 +553,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		}
 
 
-		void operator()(const FString& RowName, const FString& NameText, const FString& ValueText,  const FString& TooltipText, UObject* Context) 
+		void operator()(const FString& RowName, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
 		{
-			auto OnClickedLambda = [Context]() -> FReply			
+			auto OnClickedLambda = [Context]() -> FReply
 			{
 				FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 				TSharedPtr<IDetailsView> ParentView = EditModule.FindDetailView(FName(TEXT("UBrowse")));
@@ -578,59 +577,56 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			};
 
 			Group.AddWidgetRow()
-			.WholeRowContent()
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-				.FillWidth(1)
-				.HAlign(HAlign_Left)
-				.Padding(3)
+				.NameContent()
 				[
-					SNew(SButton)
-					.OnClicked_Lambda(OnClickedLambda)
-					.Content()
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.HAlign(HAlign_Left)
 					[
-						SNew(STextBlock)
-						.Text(FText::FromString(NameText))
+						SNew(SButton)
+						.OnClicked_Lambda(OnClickedLambda)
+						.Content()
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(NameText))
 						.ToolTipText(FText::FromString(RowName))
 						.Font(IDetailLayoutBuilder::GetDetailFont())
 
+						]
 					]
+				
 				]
-				+ SHorizontalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoWidth()
+				.ValueContent()
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(ValueText))
-					.ToolTipText(FText::FromString(TooltipText))
-					.Font(IDetailLayoutBuilder::GetDetailFont())
-				]
-			];
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					[
+						SNew(SEditableText)
+						.IsReadOnly(true)
+						.Text(FText::FromString(ValueText))
+						.ToolTipText(FText::FromString(TooltipText))
+						.Font(IDetailLayoutBuilder::GetDetailFont())
+					]
+				];
 		}
 
 		void operator()(const FString& RowName, const FString& NameText, const FString& ValueText, const FString& TooltipText)
 		{
 			Group.AddWidgetRow()
-			.WholeRowContent()
+			.NameContent()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(NameText))
+				.ToolTipText(FText::FromString(RowName))
+				.Font(IDetailLayoutBuilder::GetDetailFont())
+			]
+			.ValueContent()
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()
-				.FillWidth(1)
-				.HAlign(HAlign_Left)
-				.Padding(3)
 				[
-					SNew(STextBlock)
-					.Text(FText::FromString(NameText))
-					.ToolTipText(FText::FromString(RowName))
-					.Font(IDetailLayoutBuilder::GetDetailFont())
-				]
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				.HAlign(HAlign_Center)
-				.Padding(3)
-				[
-					SNew(STextBlock)
+					SNew(SEditableText)
+					.IsReadOnly(true)
 					.Text(FText::FromString(ValueText))
 					.ToolTipText(FText::FromString(TooltipText))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
@@ -727,14 +723,14 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView().GetSelectedObjects();
 	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Uncommon);
 	check(Objects.Num() > 0);
-	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, false);
+	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, true);
 	ObjectGroup.HeaderRow()
-	[
-		SNew(STextBlock)
-		.Text(FText::FromString("UObject"))
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString("UObject"))
 		.Font(IDetailLayoutBuilder::GetDetailFont())
-	];
-	for (auto iObject : Objects) 
+		];
+	for (auto iObject : Objects)
 	{
 		bool bIsClass = false;
 		UObject* Obj = iObject.Get();
@@ -748,7 +744,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			bIsClass = true;
 		}
 		BoolString BoolProp;
-		UBrowseRowBuilder Builder(View, ObjectCategory, ObjectGroup); 
+		UBrowseRowBuilder Builder(View, ObjectCategory, ObjectGroup);
 		FString ObjName = GetNameSafe(Obj);
 		FString FullName = GetFullNameSafe(Obj);
 		FString PathName = GetPathNameSafe(Obj);
@@ -807,45 +803,45 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				ClassBuilder(PropertyName, CPPName, SourceValue, CPPType, Property);
 			}
 		}
-/*
-		} else {
-			IDetailGroup& StructGroup = ObjectCategory.AddGroup("UStruct", LOCTEXT("UStructProperties", "Class Properties"), true, false);
-			UBrowseRowBuilder StructBuilder(View, ObjectCategory, StructGroup);
-			for (TFieldIterator<UProperty> PropIt(ObjectStruct); PropIt; ++PropIt)
-			{
-				UProperty* Property = *PropIt;
-				auto CPPName = Property->GetNameCPP();
-				auto CPPType = Property->GetCPPType();
-				auto PropertyName = GetNameSafe(Property);
-				auto OwnerName = GetNameSafe(Owner);
-				Property->ExportTextItem()
-				//StructBuilder(Property);
-				//FName PathName(*(Property->GetPathName()));
-				//StructGroup.AddPropertyRow(Property->GetFName());
-			}
-			if (Class) {
-				UClass *Within = ObjectClass->ClassWithin;
-				StructBuilder(TEXT("Within"), TEXT("Within"), GetNameSafe(Within), GetFullNameSafe("Within"), Within);
-				UObject *GeneratedBy = ObjectClass->ClassGeneratedBy;
-				StructBuilder(TEXT("GeneratedBy"), TEXT("GeneratedBy"), GetNameSafe(Within), GetFullNameSafe(Within), GeneratedBy);
-			}
-		}
-*/
-/*	
-		UBlueprint *ObjectBP = Cast<UBlueprint, UObject>(iObject);
-		if (ObjectBP) {
-			IDetailGroup& BPGroup = ObjectCategory.AddGroup("UBlueprint", LOCTEXT("UBlueprint Properties", "UBlueprint Properties"), true, false);
-			UBrowseRowBuilder BPBuilder(View, ObjectCategory, BPGroup);
-			auto Category = ObjectBP->BlueprintCategory;
-			auto Description = ObjectBP->BlueprintDescription;
-			auto BPClass = ObjectBP->GetBlueprintClass()->GetName();
-			if (!Category.IsEmpty())
-				BPBuilder(TEXT("Category"), TEXT("Category"), Category);
-			if (!Description.IsEmpty())
-				BPBuilder(TEXT("Description"), TEXT("Description"), Description);
-			BPBuilder(TEXT("BPClass"), TEXT("BPClass"), BPClass, ObjectBP->GetBlueprintClass());
-		}
+		/*
+				} else {
+					IDetailGroup& StructGroup = ObjectCategory.AddGroup("UStruct", LOCTEXT("UStructProperties", "Class Properties"), true, false);
+					UBrowseRowBuilder StructBuilder(View, ObjectCategory, StructGroup);
+					for (TFieldIterator<UProperty> PropIt(ObjectStruct); PropIt; ++PropIt)
+					{
+						UProperty* Property = *PropIt;
+						auto CPPName = Property->GetNameCPP();
+						auto CPPType = Property->GetCPPType();
+						auto PropertyName = GetNameSafe(Property);
+						auto OwnerName = GetNameSafe(Owner);
+						Property->ExportTextItem()
+						//StructBuilder(Property);
+						//FName PathName(*(Property->GetPathName()));
+						//StructGroup.AddPropertyRow(Property->GetFName());
+					}
+					if (Class) {
+						UClass *Within = ObjectClass->ClassWithin;
+						StructBuilder(TEXT("Within"), TEXT("Within"), GetNameSafe(Within), GetFullNameSafe("Within"), Within);
+						UObject *GeneratedBy = ObjectClass->ClassGeneratedBy;
+						StructBuilder(TEXT("GeneratedBy"), TEXT("GeneratedBy"), GetNameSafe(Within), GetFullNameSafe(Within), GeneratedBy);
+					}
+				}
 		*/
+		/*
+				UBlueprint *ObjectBP = Cast<UBlueprint, UObject>(iObject);
+				if (ObjectBP) {
+					IDetailGroup& BPGroup = ObjectCategory.AddGroup("UBlueprint", LOCTEXT("UBlueprint Properties", "UBlueprint Properties"), true, false);
+					UBrowseRowBuilder BPBuilder(View, ObjectCategory, BPGroup);
+					auto Category = ObjectBP->BlueprintCategory;
+					auto Description = ObjectBP->BlueprintDescription;
+					auto BPClass = ObjectBP->GetBlueprintClass()->GetName();
+					if (!Category.IsEmpty())
+						BPBuilder(TEXT("Category"), TEXT("Category"), Category);
+					if (!Description.IsEmpty())
+						BPBuilder(TEXT("Description"), TEXT("Description"), Description);
+					BPBuilder(TEXT("BPClass"), TEXT("BPClass"), BPClass, ObjectBP->GetBlueprintClass());
+				}
+				*/
 	}
 	return;
 }

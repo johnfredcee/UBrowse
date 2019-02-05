@@ -9,6 +9,7 @@ SoundCueGraphSchema.cpp
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditorActions.h"
 #include "GraphEditor.h"
+#include "ConnectionDrawingPolicy.h"
 #include "UBrowseSchema.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseSchema"
@@ -86,6 +87,22 @@ UEdGraphNode* FBrowseGraphSchemaAction_BrowseMode::PerformAction(class UEdGraph*
 	/* FSoundClassEditorUtilities::CreateSoundClass(ParentGraph, FromPin, Location, NewSoundClassName); */
 	return NULL;
 }
+
+// Overridden connection drawing policy to use less curvy lines between nodes
+class FUBrowseConnectionDrawingPolicy : public FConnectionDrawingPolicy
+{
+public:
+	FUBrowseConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements)
+		: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements)
+	{
+	}
+
+	virtual FVector2D ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const override
+	{
+		const int32 Tension = FMath::Abs<int32>(Start.X - End.X);
+		return Tension * FVector2D(1.0f, 0);
+	}
+};
 
 UBrowseSchema::UBrowseSchema(FObjectInitializer const &Args)
 {

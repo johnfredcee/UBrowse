@@ -90,10 +90,9 @@ private:
 	FText FilterText;
 	FString FilterString;
 	UClass* FilterClass;
-	bool bShouldIncludeDefaultObjects;	
+	bool bShouldIncludeClassDefaultObjects;	
 	bool bShouldIncludeDefaultSubObjects;
 	bool bShouldIncludeArchetypeObjects;
-	bool bOnlyListDefaultObjects;
 	bool bOnlyListRootObjects;
 	bool bOnlyListGCObjects;
 	bool bIncludeTransient;
