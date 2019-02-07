@@ -132,5 +132,10 @@ void UBrowseSchema::GetContextMenuActions(const UEdGraph* CurrentGraph, const UE
 	}
 }
 
+FConnectionDrawingPolicy* UBrowseSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const
+{
+	return new FUBrowseConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
+}
+
 
 #undef LOCTEXT_NAMESPACE

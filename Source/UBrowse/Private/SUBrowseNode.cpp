@@ -214,4 +214,49 @@ void SUBrowseNode::UpdateGraphNode()
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
+bool SUBrowseNode::RequiresSecondPassLayout() const
+{
+	return true;
+}
+
+void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const
+{
+	UBrowseNode* TransNode = CastChecked<UBrowseNode>(GraphNode);
+
+	// Input (Left) Nodes
+	if ((!TransNode->GetOwnerPin()->bHidden) && (TransNode->GetOwnerPin()->LinkedTo.Num() > 0))
+	{
+		UEdGraphPin* LinkedPin = TransNode->GetOwnerPin()->LinkedTo[0];
+		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+		FVector2D RightNodeSize = NodeToWidgetLookup.FindChecked(RightNode)->GetDesiredSize();
+		RightNode->NodePosX = (TransNode->NodePosX - RightNodeSize.X) - 50.0f;
+	}
+
+	if ((!TransNode->GetGeneratedByPin()->bHidden) && (TransNode->GetGeneratedByPin()->LinkedTo.Num() > 0))
+	{
+		UEdGraphPin* LinkedPin = TransNode->GetOwnerPin()->LinkedTo[0];
+		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+		FVector2D RightNodeSize = NodeToWidgetLookup.FindChecked(RightNode)->GetDesiredSize();
+		RightNode->NodePosX = (TransNode->NodePosX - RightNodeSize.X) - 50.0f;
+	}
+
+	// Output (Right) Nodes
+	if ((!TransNode->GetCDOPin()->bHidden) && (TransNode->GetCDOPin()->LinkedTo.Num() > 0))
+	{
+		UEdGraphPin* LinkedPin = TransNode->GetGeneratesPin()->LinkedTo[0];
+		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
+		RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
+	}
+
+	if ((!TransNode->GetGeneratesPin()->bHidden) && (TransNode->GetGeneratesPin()->LinkedTo.Num() > 0))
+	{
+		UEdGraphPin* LinkedPin = TransNode->GetGeneratesPin()->LinkedTo[0];
+		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
+		RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
+	}
+
+}
+
 #undef LOCTEXT_NAMESPACE

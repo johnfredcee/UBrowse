@@ -16,5 +16,7 @@ public:
 
 	// SGraphNode Implementation
 	virtual void UpdateGraphNode() override;
+	virtual bool RequiresSecondPassLayout() const override;
+	virtual void PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const override;
 	// SGraphNode Implementation
 };

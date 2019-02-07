@@ -39,7 +39,7 @@ class UBrowseSchema : public UEdGraphSchema
 
 	//~ Begin EdGraphSchema Interface
 	virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override { return GT_Ubergraph; }
-
+	virtual	FConnectionDrawingPolicy* UBrowseSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 	virtual void GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const override;
 	//~ End EdGraphSchema Interface
