@@ -77,18 +77,21 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 		if (!ThisNode->GetOwnerPin()->bHidden)
 		{
 			UActorComponent *Component = Cast<UActorComponent>(NodeObject);
-			if (Component)
+			if (Component == nullptr)
 			{
-				TArray<UEdGraphNode*> Siblings;
-				Siblings.Add(ThisNode);
-				FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
 				AActor* NodeOwner = Component->GetOwner();
-				FGraphNodeCreator<UBrowseNode> OwnerNodeBuilder(*this);
-				auto OwnerNode = OwnerNodeBuilder.CreateNode(false);
-				OwnerNode->SetupNode(FIntPoint(nodeXPos - Bounds.Width() - 350, NodeY), NodeOwner);
-				OwnerNodeBuilder.Finalize();
-				ThisNode->GetOwnerPin()->MakeLinkTo(OwnerNode->GetChildrenPin());
-				OwnerNode->GetChildrenPin()->PinName = TEXT("Actor");
+				if (NodeOwner != nullptr)
+				{	
+					TArray<UEdGraphNode*> Siblings;
+					Siblings.Add(ThisNode);
+					FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
+					FGraphNodeCreator<UBrowseNode> OwnerNodeBuilder(*this);
+					auto OwnerNode = OwnerNodeBuilder.CreateNode(false);
+					OwnerNode->SetupNode(FIntPoint(nodeXPos - Bounds.Width() - 350, NodeY), NodeOwner);
+					OwnerNodeBuilder.Finalize();
+					ThisNode->GetOwnerPin()->MakeLinkTo(OwnerNode->GetChildrenPin());
+					OwnerNode->GetChildrenPin()->PinName = TEXT("Actor");
+				}
 			}
 		}
 		if (!ThisNode->GetGeneratedByPin()->bHidden)

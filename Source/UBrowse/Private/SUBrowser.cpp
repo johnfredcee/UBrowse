@@ -597,6 +597,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				
 				]
 				.ValueContent()
+				.MaxDesiredWidth(0)
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
@@ -621,6 +622,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 			.ValueContent()
+			.MaxDesiredWidth(0)
 			[
 				SNew(SHorizontalBox)
 				+ SHorizontalBox::Slot()

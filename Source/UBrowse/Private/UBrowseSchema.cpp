@@ -6,11 +6,13 @@ SoundCueGraphSchema.cpp
 
 #include "UBrowsePrivatePCH.h"
 #include "UnrealEd.h"
+#include "Editor/UnrealEd/Public/Toolkits/AssetEditorManager.h"
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditorActions.h"
 #include "GraphEditor.h"
 #include "ConnectionDrawingPolicy.h"
 #include "UBrowseSchema.h"
+#include "UBrowseNode.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseSchema"
 
@@ -122,20 +124,30 @@ void UBrowseSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenu
 
 void UBrowseSchema::GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const
 {
-	if (InGraphNode)
+	const UBrowseNode* Node = Cast<UBrowseNode>(InGraphNode);
+	if ((Node != nullptr) && (Node->GetUObject() != nullptr) && (Node->GetUObject()->IsAsset()))
 	{
 		MenuBuilder->BeginSection("UBrowseGraphSchemaNodeActions", LOCTEXT("UBrowseActionsMenuHeader", "UBrowse Node Actions"));
-		{
-			MenuBuilder->AddWidget(SNew(SUBrowseContextMenu), LOCTEXT("UBrowseGraphOptions", "Graph Options"));
-		}
+		MenuBuilder->AddMenuEntry(LOCTEXT("UBrowseOpenAsset", "OpenInAssetEditor"),
+			LOCTEXT("UBrowseOpenAsset_Tooltip", "Opens the asset represented by this UObject in the asset Editor"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));
 		MenuBuilder->EndSection();
+
 	}
-}
+};
 
 FConnectionDrawingPolicy* UBrowseSchema::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const
 {
 	return new FUBrowseConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements);
 }
 
-
+void UBrowseSchema::OpenNodeAsset(const UObject* Obj)
+{
+	if ((Obj != nullptr) && (Obj->IsAsset()))
+	{
+		FAssetEditorManager::Get().OpenEditorForAsset(const_cast<UObject*>(Obj));
+	}
+	return;
+}
 #undef LOCTEXT_NAMESPACE

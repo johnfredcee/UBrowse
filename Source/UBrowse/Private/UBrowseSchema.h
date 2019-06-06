@@ -19,7 +19,8 @@ struct FBrowseGraphSchemaAction_BrowseMode : public FEdGraphSchemaAction
 
 	FBrowseGraphSchemaAction_BrowseMode(const FText& InNodeCategory, const FText& InMenuDesc, const FString& InToolTip, const int32 InGrouping)
 		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping)
-	{}
+	{} 
+
 
 	//~ Begin FEdGraphSchemaAction Interface
 	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
@@ -35,6 +36,7 @@ class UBrowseSchema : public UEdGraphSchema
 
 	// TO DO : Get Graph Display Info
 	//virtual void GetGraphDisplayInformation(const UEdGraph& Graph, /*out*/ FGraphDisplayInfo& DisplayInfo) const;
+	static void OpenNodeAsset(const UObject* Obj);
 
 
 	//~ Begin EdGraphSchema Interface

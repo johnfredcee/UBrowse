@@ -4,7 +4,7 @@ using UnrealBuildTool;
 
 public class UBrowse : ModuleRules
 {
-	public UBrowse(TargetInfo target) 
+	public UBrowse(ReadOnlyTargetRules Target) : base(Target)
 	{
 		
 		PublicIncludePaths.AddRange(
