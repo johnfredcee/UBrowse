@@ -91,3 +91,5 @@ private:
 	TWeakObjectPtr< UObject > ClassToView;
 
 };
+
+#undef LOCTEXT_NANESPACE

@@ -44,7 +44,7 @@ public:
 			HighlightText = InArgs._HighlightText;
 			OuterName = Obj->GetOuter() != nullptr ? FText::FromString(Obj->GetOuter()->GetName()) : LOCTEXT("NoOuter", "None");			
 			// Get selection icon based on actor(s) classes and add before the selection label
-			ClassIcon = FClassIconFinder::FindIconForClass(Obj->GetClass());
+			ClassIcon = FClassIconFinder::FindThumbnailForClass(Obj->GetClass());
 			Number = Obj ? Obj->GetFName().GetNumber() : 0;
 			Id = Obj ? Obj->GetUniqueID() : 0;
 		}	

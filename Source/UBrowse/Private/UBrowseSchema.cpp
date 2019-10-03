@@ -28,7 +28,7 @@ public:
 		*
 		* @param InArgs   Declaration from which to construct the widget.
 		*/
-		void Construct(const FArguments& InArgs)
+	void Construct(const FArguments& InArgs)
 	{
 
 		this->ChildSlot
@@ -116,7 +116,7 @@ void UBrowseSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenu
 	const FText Name = LOCTEXT("ChangeUBrowseMode", "Change UBrowse Mode");
 	const FText ToolTip = LOCTEXT("ChangeUBrowseModeTooltip", "Change viewing mode of UBrowse Graph");
 
-	TSharedPtr<FSoundClassGraphSchemaAction_NewNode> NewAction(new FSoundClassGraphSchemaAction_NewNode(FText::GetEmpty(), Name, ToolTip.ToString(), 0));
+	TSharedPtr<FBrowseGraphSchemaAction_BrowseMode> NewAction(new FBrowseGraphSchemaAction_BrowseMode(FText::GetEmpty(), Name, ToolTip, 0));
 
 	ContextMenuBuilder.AddAction(NewAction);
 }

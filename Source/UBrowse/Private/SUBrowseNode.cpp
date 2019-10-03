@@ -32,11 +32,11 @@ FSlateColor SUBrowseNode::GetNodeTitleColor() const
 	}
 	if (Class->IsChildOf(UBlueprintGeneratedClass::StaticClass()))
 	{
-		return GetDefault<UGraphEditorSettings>()->AssetPinTypeColor;
+		return GetDefault<UGraphEditorSettings>()->SoftClassPinTypeColor;
 	}
 	if (Class->IsChildOf(UBlueprint::StaticClass()))
 	{
-		return GetDefault<UGraphEditorSettings>()->AssetClassPinTypeColor;
+		return GetDefault<UGraphEditorSettings>()->SoftObjectPinTypeColor;
 	}
 	if (Class->IsChildOf(UPackage::StaticClass()))
 	{

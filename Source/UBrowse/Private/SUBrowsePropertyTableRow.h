@@ -25,7 +25,7 @@ public:
 		if (UObject* Obj = InArgs._Object->Object.Get())
 		{
 			// Get selection icon based on actor(s) classes and add before the selection label
-			ClassIcon = FClassIconFinder::FindIconForClass(Obj->GetClass());
+			ClassIcon = FClassIconFinder::FindThumbnailForClass(Obj->GetClass());
 		}
 		SMultiColumnTableRow<TSharedPtr<int32> >::Construct(FSuperRowType::FArguments(), InOwnerTableView);
     }

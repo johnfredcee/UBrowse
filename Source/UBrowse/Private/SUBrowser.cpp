@@ -54,7 +54,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 		/*InNotifyHook=*/ nullptr,
 		/*InSearchInitialKeyFocus=*/ false,
 		/*InViewIdentifier=*/ FName(TEXT("UBrowse")));
-	DetailsViewArgs.DefaultsOnlyVisibility = FDetailsViewArgs::EEditDefaultsOnlyNodeVisibility::Automatic;
+	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Automatic;
 	TSharedPtr<FUBrowserPanel> FirstBrowserPanel(new FUBrowserPanel);
 	TSharedPtr<SUBrowsePanel> FirstSUBrowsePanel = SNew(SUBrowsePanel).OnNodeDoubleClicked(this, &SUBrowser::OnNodeDoubleClicked);
 	FirstBrowserPanel->BrowsePanel = FirstSUBrowsePanel;
@@ -473,11 +473,12 @@ FReply SUBrowser::OnClassSelectionClicked()
 
 	FClassViewerInitializationOptions Options;
 	Options.Mode = EClassViewerMode::ClassPicker;
+	Options.DisplayMode = EClassViewerDisplayMode::ListView;
 	Options.bEnableClassDynamicLoading = true;
-	Options.bShowDisplayNames = false;
 	Options.bShowNoneOption = true;
 	Options.bShowObjectRootClass = true;
 	Options.bShowUnloadedBlueprints = true;
+	Options.NameTypeToDisplay = EClassViewerNameTypeToDisplay::DisplayName;
 
 	UClass* ChosenClass = FilterClass;
 	const bool bPressedOk = SClassPickerDialog::PickClass(TitleText, Options, ChosenClass, UObject::StaticClass());
@@ -543,11 +544,11 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 {
 	struct UBrowseRowBuilder
 	{
+		const IDetailsView* View;
 		IDetailCategoryBuilder& Category;
 		IDetailGroup& Group;
-		const IDetailsView& View;
 
-		UBrowseRowBuilder(const IDetailsView&  RowView, IDetailCategoryBuilder& RowCategory, IDetailGroup& CategoryGroup) : View(RowView), Category(RowCategory), Group(CategoryGroup)
+		UBrowseRowBuilder(const IDetailsView* RowView, IDetailCategoryBuilder& RowCategory, IDetailGroup& CategoryGroup) :  View(RowView), Category(RowCategory), Group(CategoryGroup)
 		{
 
 		}
@@ -721,17 +722,17 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		}
 	};
 
-	const IDetailsView&  View = DetailLayout.GetDetailsView();
-	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView().GetSelectedObjects();
+	const IDetailsView*  View = DetailLayout.GetDetailsView();
+	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView()->GetSelectedObjects();
 	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Uncommon);
 	check(Objects.Num() > 0);
 	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, true);
 	ObjectGroup.HeaderRow()
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString("UObject"))
+	[
+		SNew(STextBlock)
+		.Text(FText::FromString("UObject"))
 		.Font(IDetailLayoutBuilder::GetDetailFont())
-		];
+	];
 	for (auto iObject : Objects)
 	{
 		bool bIsClass = false;
