@@ -44,7 +44,8 @@ public:
 			HighlightText = InArgs._HighlightText;
 			OuterName = Obj->GetOuter() != nullptr ? FText::FromString(Obj->GetOuter()->GetName()) : LOCTEXT("NoOuter", "None");			
 			// Get selection icon based on actor(s) classes and add before the selection label
-			ClassIcon = FClassIconFinder::FindThumbnailForClass(Obj->GetClass());
+			FSlateIcon Icon(FSlateIconFinder::FindIconForClass(Obj->GetClass()));
+			ClassIcon = Icon.GetSmallIcon();
 			Number = Obj ? Obj->GetFName().GetNumber() : 0;
 			Id = Obj ? Obj->GetUniqueID() : 0;
 		}	
@@ -60,46 +61,44 @@ public:
 		if (ColumnName == "Class")
 		{
 			return SNew(SHorizontalBox)
-
-				+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(SImage)
-					.Image(ClassIcon)
-				]
-
-			+ SHorizontalBox::Slot()
-				.AutoWidth()
-				[
-					SNew(STextBlock)
-					.Text(ClassName)
-				];
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(SImage)
+						.Image(ClassIcon)
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SNew(STextBlock)
+						.Text(ClassName)
+					];
 		}
 		else if (ColumnName == "Name")
 		{
 			return SNew(STextBlock)
-				.Text(Name)
-				.HighlightText(HighlightText);
+					.Text(Name)
+					.HighlightText(HighlightText);
 		}
 		else if (ColumnName == "Path")
 		{
 			return SNew(STextBlock)
-				.Text(Package);
+				   .Text(Package);
 		}
 		else if (ColumnName == "Outer")
 		{
 			return SNew(STextBlock)
-				.Text(OuterName);
+				   .Text(OuterName);
 		} 
 		else if (ColumnName == "Number")
 		{
 			return SNew(STextBlock)
-				.Text(FText::AsNumber(Number));
+				   .Text(FText::AsNumber(Number));
 		}
 		else if (ColumnName == "Id")
 		{
 			return SNew(STextBlock)
-				.Text(FText::AsNumber(Id));
+				   .Text(FText::AsNumber(Id));
 		}
 
 		return SNullWidget::NullWidget;

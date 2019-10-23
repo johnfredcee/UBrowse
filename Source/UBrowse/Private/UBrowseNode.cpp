@@ -124,9 +124,24 @@ void UBrowseNode::AllocateDefaultPins()
 }
 
 
+
 void UBrowseNode::SetupNode(const FIntPoint& NodePosition, UObject* NodeUObject)
 {
 
+	// this is needed to work around an engine bug
+	auto GetDescription = [](UObject *Obj)
+	{
+		UBlueprint* BPObj = Cast<UBlueprint>(Obj);
+		if (BPObj == nullptr)
+		{
+			return Obj->GetDesc();
+		}		
+		if (BPObj->ParentClass == nullptr)
+		{
+			return FString(TEXT("Default BP"));
+		}
+		return Obj->GetDesc();
+	};
 	NodeObject = NodeUObject;
 	FString Title;
 	Title.Empty(256);
@@ -135,7 +150,7 @@ void UBrowseNode::SetupNode(const FIntPoint& NodePosition, UObject* NodeUObject)
 	Title += " -> ";
 	NodeUObject->AppendName(Title);
 	NodeTitle = FText::FromString(Title);
-	ShortDesc = NodeUObject->GetDesc();
+	ShortDesc = GetDescription(NodeUObject);
 	EObjectFlags UObjectFlags = NodeUObject->GetFlags();
 	LongDesc = GetFlagsAsText(UObjectFlags);
 	NodePosX = NodePosition.X;
