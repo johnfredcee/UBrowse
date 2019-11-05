@@ -21,7 +21,7 @@ public:
 
 	const FText GetShortDesc() const { return FText::FromString(ShortDesc);  }
 	const FText GetLongDesc() const { return FText::FromString(LongDesc);  }
-	const UObject* GetUObject() const { return NodeObject; }
+	const UObject* GetUObject() const { return NodeObject.IsValid() ? NodeObject.Get() : nullptr; }
 	FText GetTooltipText() const override;
 
 	// UEdGraphNode implementation
@@ -41,5 +41,5 @@ private:
 	UEdGraphPin* GeneratesPin = nullptr;
 	UEdGraphPin* GeneratedByPin = nullptr;
 	const UClass*  NodeClass = nullptr;
-	const UObject* NodeObject = nullptr;
+	TWeakObjectPtr<UObject> NodeObject;
 };

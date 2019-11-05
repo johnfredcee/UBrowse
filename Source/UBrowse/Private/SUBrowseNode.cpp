@@ -69,7 +69,7 @@ void SUBrowseNode::UpdateGraphNode()
 
 	ContentScale.Bind(this, &SUBrowseNode::GetContentScale);
 
-	UBrowseNode *EdGraphNode = static_cast<UBrowseNode *>(GraphNode);
+	UBrowseNode *EdGraphNode = Cast<UBrowseNode>(GraphNode);
 
 	GetOrAddSlot(ENodeZone::Center)
 	.HAlign(HAlign_Center)
@@ -113,7 +113,9 @@ void SUBrowseNode::UpdateGraphNode()
 								+ SHorizontalBox::Slot()
 								.AutoWidth()
 								[
-									FEditorClassUtils::GetDocumentationLinkWidget(EdGraphNode->GetUObject()->GetClass())
+									EdGraphNode->GetUObject() != nullptr ?
+										FEditorClassUtils::GetDocumentationLinkWidget(EdGraphNode->GetUObject()->GetClass()) : 
+										SNullWidget::NullWidget
 								]
 								+ SHorizontalBox::Slot()
 								.AutoWidth()
