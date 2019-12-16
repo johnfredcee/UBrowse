@@ -38,11 +38,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 	SortBy = EQuerySortMode::ByID;
 	SortDirection = EColumnSortMode::Descending;
 	FilterClass = UBlueprint::StaticClass();
-	FText WidgetText = FText::Format(
-		LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-		FText::FromString(TEXT("FUBrowseModule::OnSpawnPluginTab")),
-		FText::FromString(TEXT("UBrowse.cpp"))
-	);
+
 	// Create a property view
 	FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	FDetailsViewArgs DetailsViewArgs(
@@ -554,10 +550,11 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		}
 
 
-		void operator()(const FString& RowName, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
+		void operator()(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
 		{
-			auto OnClickedLambda = [Context]() -> FReply
+			auto FindUBrowserWidget = []()
 			{
+				TSharedPtr<SUBrowser> UBrowserWidget;
 				FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
 				TSharedPtr<IDetailsView> ParentView = EditModule.FindDetailView(FName(TEXT("UBrowse")));
 				FWidgetPath WidgetPath;
@@ -568,13 +565,66 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 					FArrangedWidget ArrangedWidget = ArrangedChildren[iWidget];
 					if (ArrangedWidget.Widget->GetTag() == FName(TEXT("UBrowseTag"))) {
 						TSharedPtr<SWidget> WidgetPtr(ArrangedWidget.Widget);
-						TSharedPtr<SUBrowser> UBrowserWidget = StaticCastSharedPtr<SUBrowser>(WidgetPtr);
-						TSharedPtr<FBrowserObject> SelectedObject(new FBrowserObject);
-						SelectedObject->Object = Context;
-						UBrowserWidget->OnObjectListSelectionChanged(SelectedObject, ESelectInfo::Direct);
+						UBrowserWidget = StaticCastSharedPtr<SUBrowser>(WidgetPtr);
+						return UBrowserWidget;
 					}
+				}			
+				return UBrowserWidget;
+			};
+
+			auto OnClickedLambda = [Context, FindUBrowserWidget]() -> FReply
+			{
+				TSharedPtr<SUBrowser> UBrowserWidget = FindUBrowserWidget();
+				TSharedPtr<FBrowserObject> SelectedObject(new FBrowserObject);
+				SelectedObject->Object = Context;
+				UBrowserWidget->OnObjectListSelectionChanged(SelectedObject, ESelectInfo::Direct);
+				return FReply::Handled();
+			};
+
+			auto OnClickedInstanceLambda = [Context, FindUBrowserWidget]() -> FReply
+			{
+				TSharedPtr<SUBrowser> UBrowserWidget = FindUBrowserWidget();
+				TSharedPtr<FBrowserObject> SelectedObject(new FBrowserObject);
+				UClass* ContextClass = Cast<UClass>(Context);
+				if ((ContextClass != nullptr) && (ContextClass->GetDefaultObject() != nullptr))
+				{
+					SelectedObject->Object = ContextClass->GetDefaultObject();
+				}
+				else
+				{
+					SelectedObject->Object = Context;
+				}			
+				if (SelectedObject->Object != nullptr)
+				{
+					UBrowserWidget->OnObjectListSelectionChanged(SelectedObject, ESelectInfo::Direct);
 				}
 				return FReply::Handled();
+			};
+
+			auto OnClickedClassLambda = [Context, FindUBrowserWidget]() -> FReply
+			{
+				TSharedPtr<SUBrowser> UBrowserWidget = FindUBrowserWidget();
+				TSharedPtr<FBrowserObject> SelectedObject(new FBrowserObject);
+				UClass* ContextClass = Cast<UClass>(Context);
+				if (ContextClass != nullptr) 
+				{
+					SelectedObject->Object = Context;
+				}
+				else
+				{
+					SelectedObject->Object = Context->GetClass();
+				}			
+				if (SelectedObject->Object != nullptr)
+				{
+					UBrowserWidget->OnObjectListSelectionChanged(SelectedObject, ESelectInfo::Direct);
+				}
+				return FReply::Handled();
+			};
+
+
+			auto IsEnabledLambda = [Context]()->bool
+			{
+				return Context != nullptr;
 			};
 
 			Group.AddWidgetRow()
@@ -584,15 +634,10 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 					+ SHorizontalBox::Slot()
 					.HAlign(HAlign_Left)
 					[
-						SNew(SButton)
-						.OnClicked_Lambda(OnClickedLambda)
-						.Content()
-						[
-							SNew(STextBlock)
-							.Text(FText::FromString(NameText))
-							.ToolTipText(FText::FromString(RowName))
-							.Font(IDetailLayoutBuilder::GetDetailFont())
-						]
+						SNew(STextBlock)
+						.Text(FText::FromString(NameText))
+						.ToolTipText(FText::FromString(NameTooltipText))
+						.Font(IDetailLayoutBuilder::GetDetailFont())
 					]
 				
 				]
@@ -601,24 +646,50 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
+					.Padding(0.f, 0.f, 5.0f, 0.f)
+					.AutoWidth()
 					[
-						SNew(SEditableText)
-						.IsReadOnly(true)
-						.Text(FText::FromString(ValueText))
-						.ToolTipText(FText::FromString(TooltipText))
-						.Font(IDetailLayoutBuilder::GetDetailFont())
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.Padding(5.f, 0.f, 5.0f, 0.f)
+						.AutoWidth()
+						[
+							SNew(SButton)
+							.OnClicked_Lambda(OnClickedInstanceLambda)
+							.IsEnabled_Lambda(IsEnabledLambda)
+							.Text(FText::FromString(TEXT("...")))
+							.ToolTipText(FText::FromString(*FString::Printf(TEXT("Instance %s"), *ValueText)))
+						]
+						+ SHorizontalBox::Slot()
+						.Padding(5.f, 0.f, 5.0f, 0.f)
+						.AutoWidth()
+						[
+							SNew(SButton)
+							.OnClicked_Lambda(OnClickedClassLambda)
+							.IsEnabled_Lambda(IsEnabledLambda)
+							.Text(FText::FromString(TEXT(".")))
+							.ToolTipText(FText::FromString(TEXT("Class")))
+						]
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						[
+							SNew(STextBlock)
+							.Text(FText::FromString(ValueText))
+							.ToolTipText(FText::FromString(TooltipText))
+							.Font(IDetailLayoutBuilder::GetDetailFont())
+						]
 					]
 				];
 		}
 
-		void operator()(const FString& RowName, const FString& NameText, const FString& ValueText, const FString& TooltipText)
+		void operator()(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText)
 		{
 			Group.AddWidgetRow()
 			.NameContent()
 			[
 				SNew(STextBlock)
 				.Text(FText::FromString(NameText))
-				.ToolTipText(FText::FromString(RowName))
+				.ToolTipText(FText::FromString(NameTooltipText))
 				.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 			.ValueContent()
@@ -723,15 +794,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 
 	const IDetailsView*  View = DetailLayout.GetDetailsView();
 	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView()->GetSelectedObjects();
-	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Uncommon);
+	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Important);
 	check(Objects.Num() > 0);
 	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, true);
-	ObjectGroup.HeaderRow()
-	[
-		SNew(STextBlock)
-		.Text(FText::FromString("UObject"))
-		.Font(IDetailLayoutBuilder::GetDetailFont())
-	];
 	for (auto iObject : Objects)
 	{
 		bool bIsClass = false;
@@ -745,6 +810,12 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			Obj = Class->GetDefaultObject();
 			bIsClass = true;
 		}
+		ObjectGroup.HeaderRow()
+		[
+			SNew(STextBlock)
+			.Text(FText::FromString(bIsClass ? "UClass" : "UObject"))
+			.Font(IDetailLayoutBuilder::GetDetailFont())
+		];
 		BoolString BoolProp;
 		UBrowseRowBuilder Builder(View, ObjectCategory, ObjectGroup);
 		FString ObjName = GetNameSafe(Obj);
@@ -789,8 +860,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		FString SubObjectText = BoolProp(Obj->IsDefaultSubobject(), TEXT("Default SubObject"));
 		Builder(TEXT("Default SubObject"), TEXT("SubObject"), SubObjectText, SubObjectText);
 		UStruct *ObjectStruct = Cast<UStruct, UObject>(Obj);
-		// ok, it's not a class or anything - it's an instance
-		IDetailGroup& FieldGroup = ObjectCategory.AddGroup("UFields", LOCTEXT("UObjectFields", "Object Fields"), true, false);
+
+		// Enupmerate the object fields
+		IDetailGroup& FieldGroup = ObjectCategory.AddGroup("UFields", LOCTEXT("UObjectFields", "Object Fields"), true, true);
 		UBrowseRowBuilder ClassBuilder(View, ObjectCategory, FieldGroup);
 		for (TFieldIterator<UProperty> PropIt(Class); PropIt; ++PropIt)
 		{
@@ -802,9 +874,18 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			uint8* SourceAddr = Property->ContainerPtrToValuePtr<uint8>(Obj);
 			if (SourceAddr != nullptr)
 			{
-				FString SourceValue;
-				Property->ExportText_Direct(SourceValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
-				ClassBuilder(PropertyName, CPPName, SourceValue, CPPType, Property);
+				FString CPPValue, UnrealValue;
+				Property->ExportText_Direct(CPPValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
+				Property->ExportText_Direct(UnrealValue, SourceAddr, SourceAddr, nullptr, PPF_BlueprintDebugView);
+				UObjectProperty* ObjectProperty = Cast<UObjectProperty>(Property);
+				if (ObjectProperty != nullptr)
+				{
+					ClassBuilder(CPPType, PropertyName, UnrealValue, CPPValue, ObjectProperty->GetObjectPropertyValue(ObjectProperty->ContainerPtrToValuePtr<void>(Obj)));								
+				}
+				else
+				{
+					ClassBuilder(CPPType, PropertyName, UnrealValue, CPPValue); 
+				}				
 			}
 		}
 		/*
@@ -852,13 +933,17 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 
 void SUBrowser::AddObjectToHistory(TSharedPtr<FBrowserObject> Item)
 {
-	uint32 ItemId = (Item.IsValid() && (Item->Object != nullptr)) ? Item->Object->GetUniqueID() : 0;
-	if (History.FindByPredicate([ItemId](TSharedPtr<FBrowserObject> OtherItem)
-	{ 
-		return ItemId == (OtherItem.IsValid() && (OtherItem->Object != nullptr)) ? OtherItem->Object->GetUniqueID() : 0;  
-	}) == nullptr)
+	UObject* ItemObject = Item.IsValid() ? Item->Object.Get() : nullptr;
+	if (ItemObject != nullptr)
 	{
-		History.Add(TSharedPtr<FBrowserObject>(Item));
+		if (History.FindByPredicate([ItemObject](TSharedPtr<FBrowserObject> OtherItem)
+		{ 
+			UObject* OtherObject = OtherItem.IsValid() ? OtherItem->Object.Get() : nullptr;
+			return OtherObject == ItemObject;
+		}) == nullptr)
+		{
+			History.Add(TSharedPtr<FBrowserObject>(Item));
+		}
 	}
 	ObjectHistoryView->RequestListRefresh();
 }

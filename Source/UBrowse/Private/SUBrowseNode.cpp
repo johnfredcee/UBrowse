@@ -221,6 +221,7 @@ bool SUBrowseNode::RequiresSecondPassLayout() const
 	return true;
 }
 
+#pragma optimize("", off)
 void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const
 {
 	UBrowseNode* TransNode = CastChecked<UBrowseNode>(GraphNode);
@@ -229,17 +230,9 @@ void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNod
 	if ((!TransNode->GetOwnerPin()->bHidden) && (TransNode->GetOwnerPin()->LinkedTo.Num() > 0))
 	{
 		UEdGraphPin* LinkedPin = TransNode->GetOwnerPin()->LinkedTo[0];
-		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D RightNodeSize = NodeToWidgetLookup.FindChecked(RightNode)->GetDesiredSize();
-		RightNode->NodePosX = (TransNode->NodePosX - RightNodeSize.X) - 50.0f;
-	}
-
-	if ((!TransNode->GetGeneratedByPin()->bHidden) && (TransNode->GetGeneratedByPin()->LinkedTo.Num() > 0))
-	{
-		UEdGraphPin* LinkedPin = TransNode->GetGeneratedByPin()->LinkedTo[0];
-		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D RightNodeSize = NodeToWidgetLookup.FindChecked(RightNode)->GetDesiredSize();
-		RightNode->NodePosX = (TransNode->NodePosX - RightNodeSize.X) - 50.0f;
+		UBrowseNode* LeftNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+		FVector2D LeftNodeSize = NodeToWidgetLookup.FindChecked(LeftNode)->GetDesiredSize();		
+		LeftNode->NodePosX = (TransNode->NodePosX - LeftNodeSize.X) - 50.0f;
 	}
 
 	// Output (Right) Nodes
@@ -255,10 +248,13 @@ void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNod
 	{
 		UEdGraphPin* LinkedPin = TransNode->GetGeneratesPin()->LinkedTo[0];
 		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
+		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();	
 		RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
+		//LeftNode->NodePosX = (TransNode->NodePosX - LeftNodeSize.X) - 50.0f;
+		// FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
+		// RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
 	}
-
 }
+#pragma optimize("", on)
 
 #undef LOCTEXT_NAMESPACE

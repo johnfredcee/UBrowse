@@ -146,11 +146,10 @@ void UBrowseNode::SetupNode(const FIntPoint& NodePosition, UObject* NodeUObject)
 	{
 		FString Title;
 		Title.Empty(256);
-		NodeClass = Cast<UClass>(NodeObject);
+		NodeClass = NodeObject->GetClass();
 		if (NodeClass != nullptr)	
 		{
-			UClass* ObjectClass = NodeUObject->GetClass();
-			ObjectClass->AppendName(Title);
+			NodeClass->AppendName(Title);
 			Title += " -> ";
 		}
 		NodeUObject->AppendName(Title);
