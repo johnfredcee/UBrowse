@@ -11,6 +11,11 @@
 #include "IDetailsView.h"
 #include "PropertyEditing.h"
 #include "EditorFontGlyphs.h"
+#include "DetailLayoutBuilder.h"
+#include "IDetailChildrenBuilder.h"
+#include "IDetailPropertyRow.h"
+#include "DetailCategoryBuilder.h"
+#include "PropertyCustomizationHelpers.h"
 
 #include "ClassViewerModule.h"
 #include "SClassPickerDialog.h"
@@ -535,22 +540,45 @@ void SUBrowser::OnSortByChanged(const EColumnSortPriority::Type SortPriority, co
 	RefreshList();
 }
 
-
-void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
+#pragma optimize("", off)
+void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 {
-	struct UBrowseRowBuilder
+	struct UBrowseRowBuilder : public TSharedFromThis<UBrowseRowBuilder>
 	{
 		const IDetailsView* View;
+		IDetailLayoutBuilder& DetailLayout;
 		IDetailCategoryBuilder& Category;
 		IDetailGroup& Group;
 
-		UBrowseRowBuilder(const IDetailsView* RowView, IDetailCategoryBuilder& RowCategory, IDetailGroup& CategoryGroup) :  View(RowView), Category(RowCategory), Group(CategoryGroup)
+		void GenerateArrayWidget(TSharedRef<IPropertyHandle> PropertyHandle, int32 ArrayIndex, IDetailChildrenBuilder& ChildrenBuilder)
+		{
+			IDetailPropertyRow& ArrayRow = ChildrenBuilder.AddProperty(PropertyHandle);
+		}
+
+		UBrowseRowBuilder(const IDetailsView* RowView, IDetailLayoutBuilder& InDetailLayout, IDetailCategoryBuilder& RowCategory, IDetailGroup& CategoryGroup) :  View(RowView), DetailLayout(InDetailLayout), Category(RowCategory), Group(CategoryGroup)
 		{
 
 		}
 
 
-		void operator()(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
+		void BuildArrayRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context, UArrayProperty* ArrayProperty)
+		{
+			FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayProperty->ContainerPtrToValuePtr<void>(Context));
+			FString ArrayValueText = FString::Printf(TEXT("%d Elements"), ArrayHelper.Num());
+			BuildSimpleRow(NameTooltipText, NameText, ArrayValueText, TooltipText);
+			UProperty* ArrayValueProperty = ArrayProperty->Inner;
+			for (int32 i = 0; i < ArrayHelper.Num(); i++)
+			{
+				FString CPPValue, UnrealValue, IndexText;
+				ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+				ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+				IndexText = FString::Printf(TEXT("[%d]"), i);
+				BuildSimpleRow(NameTooltipText, IndexText, UnrealValue, CPPValue);
+			}
+		}
+		
+
+		void BuildObjectRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
 		{
 			auto FindUBrowserWidget = []()
 			{
@@ -655,20 +683,20 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 						.AutoWidth()
 						[
 							SNew(SButton)
-							.OnClicked_Lambda(OnClickedInstanceLambda)
+							.OnClicked_Lambda(OnClickedClassLambda)
 							.IsEnabled_Lambda(IsEnabledLambda)
-							.Text(FText::FromString(TEXT("...")))
-							.ToolTipText(FText::FromString(*FString::Printf(TEXT("Instance %s"), *ValueText)))
+							.Text(FText::FromString(TEXT(".")))
+							.ToolTipText(FText::FromString(IsEnabledLambda() ? *FString::Printf(TEXT("Class %s"), *GetNameSafe(Context->GetClass())) :  TEXT("None")))
 						]
 						+ SHorizontalBox::Slot()
 						.Padding(5.f, 0.f, 5.0f, 0.f)
 						.AutoWidth()
 						[
 							SNew(SButton)
-							.OnClicked_Lambda(OnClickedClassLambda)
+							.OnClicked_Lambda(OnClickedInstanceLambda)
 							.IsEnabled_Lambda(IsEnabledLambda)
-							.Text(FText::FromString(TEXT(".")))
-							.ToolTipText(FText::FromString(TEXT("Class")))
+							.Text(FText::FromString(TEXT("...")))
+							.ToolTipText(FText::FromString(*FString::Printf(TEXT("Instance %s"), *ValueText)))
 						]
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
@@ -682,7 +710,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				];
 		}
 
-		void operator()(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText)
+		void BuildSimpleRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText)
 		{
 			Group.AddWidgetRow()
 			.NameContent()
@@ -792,9 +820,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 		}
 	};
 
-	const IDetailsView*  View = DetailLayout.GetDetailsView();
-	const TArray<TWeakObjectPtr<UObject>> Objects = DetailLayout.GetDetailsView()->GetSelectedObjects();
-	IDetailCategoryBuilder& ObjectCategory = DetailLayout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Important);
+	const IDetailsView*  View = Layout.GetDetailsView();
+	const TArray<TWeakObjectPtr<UObject>> Objects = Layout.GetDetailsView()->GetSelectedObjects();
+	IDetailCategoryBuilder& ObjectCategory = Layout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Important);
 	check(Objects.Num() > 0);
 	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, true);
 	for (auto iObject : Objects)
@@ -817,53 +845,53 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 			.Font(IDetailLayoutBuilder::GetDetailFont())
 		];
 		BoolString BoolProp;
-		UBrowseRowBuilder Builder(View, ObjectCategory, ObjectGroup);
+		UBrowseRowBuilder Builder(View, Layout, ObjectCategory, ObjectGroup);
 		FString ObjName = GetNameSafe(Obj);
 		FString FullName = GetFullNameSafe(Obj);
 		FString PathName = GetPathNameSafe(Obj);
-		Builder(TEXT("Name"), TEXT("Name"), ObjName, FullName);
+		Builder.BuildSimpleRow(TEXT("Name"), TEXT("Name"), ObjName, FullName);
 		FString DetailedInfo = Obj->GetDetailedInfo();
 		if (DetailedInfo.IsEmpty())
 		{
 			DetailedInfo = PathName;
 		}
-		Builder(TEXT("Path Name"), TEXT("Path Name"), PathName, DetailedInfo);
-		Builder(TEXT("Flags"), TEXT("Flags"), ObjectFlagBuilder::PrintObjectFlags(Obj), TEXT("Object Flags"));
+		Builder.BuildSimpleRow(TEXT("Path Name"), TEXT("Path Name"), PathName, DetailedInfo);
+		Builder.BuildSimpleRow(TEXT("Flags"), TEXT("Flags"), ObjectFlagBuilder::PrintObjectFlags(Obj), TEXT("Object Flags"));
 		FString IsNativeText = BoolProp(Obj->IsNative(), TEXT("Native"));
-		Builder(TEXT("Native"), TEXT("Native"), IsNativeText, IsNativeText);
+		Builder.BuildSimpleRow(TEXT("Native"), TEXT("Native"), IsNativeText, IsNativeText);
 		if (Class) {
 			auto ClassName = GetNameSafe(Class);
-			Builder(TEXT("Class"), TEXT("Class"), ClassName, GetFullNameSafe(Class), Class);
+			Builder.BuildObjectRow(TEXT("Class"), TEXT("Class"), ClassName, GetFullNameSafe(Class), Class);
 			auto CDO = Class->GetDefaultObject();
 			if (CDO) {
 				auto CDOName = GetNameSafe(CDO);
-				Builder(TEXT("CDO"), TEXT("CDO"), CDOName, GetFullNameSafe(CDO), CDO);
+				Builder.BuildObjectRow(TEXT("CDO"), TEXT("CDO"), CDOName, GetFullNameSafe(CDO), CDO);
 			}
 			FString ClassHeaderPath;
 			if (FSourceCodeNavigation::FindClassHeaderPath(Class, ClassHeaderPath) && IFileManager::Get().FileSize(*ClassHeaderPath) != INDEX_NONE)
 			{
 				ClassHeaderPath = FPaths::GetCleanFilename(ClassHeaderPath);
-				Builder(TEXT("CPPHeader"), TEXT("CPPHeader"), ClassHeaderPath, TEXT("Class Header Path"));
+				Builder.BuildSimpleRow(TEXT("CPPHeader"), TEXT("CPPHeader"), ClassHeaderPath, TEXT("Class Header Path"));
 			}
 		}
 		UObject* Outer = Obj->GetOuter();
 		if (Outer)
 		{
 			auto OuterName = GetNameSafe(Outer);
-			Builder(TEXT("Outer"), TEXT("Outer"), OuterName, GetFullNameSafe(Outer), Outer);
+			Builder.BuildObjectRow(TEXT("Outer"), TEXT("Outer"), OuterName, GetFullNameSafe(Outer), Outer);
 		}
 		UObject* Archetype = Obj->GetArchetype();
 		if (Archetype) {
 			auto ArchetypeName = GetNameSafe(Archetype);
-			Builder(TEXT("Archetype"), TEXT("Archetype"), ArchetypeName, GetFullNameSafe(Archetype), Archetype);
+			Builder.BuildObjectRow(TEXT("Archetype"), TEXT("Archetype"), ArchetypeName, GetFullNameSafe(Archetype), Archetype);
 		}
 		FString SubObjectText = BoolProp(Obj->IsDefaultSubobject(), TEXT("Default SubObject"));
-		Builder(TEXT("Default SubObject"), TEXT("SubObject"), SubObjectText, SubObjectText);
+		Builder.BuildSimpleRow(TEXT("Default SubObject"), TEXT("SubObject"), SubObjectText, SubObjectText);
 		UStruct *ObjectStruct = Cast<UStruct, UObject>(Obj);
 
-		// Enupmerate the object fields
+		// Enumerate the object fields
 		IDetailGroup& FieldGroup = ObjectCategory.AddGroup("UFields", LOCTEXT("UObjectFields", "Object Fields"), true, true);
-		UBrowseRowBuilder ClassBuilder(View, ObjectCategory, FieldGroup);
+		TSharedPtr<UBrowseRowBuilder>  ClassBuilder = MakeShareable( new UBrowseRowBuilder (View, Layout, ObjectCategory, FieldGroup));
 		for (TFieldIterator<UProperty> PropIt(Class); PropIt; ++PropIt)
 		{
 			UProperty* Property = *PropIt;
@@ -878,14 +906,24 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 				Property->ExportText_Direct(CPPValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
 				Property->ExportText_Direct(UnrealValue, SourceAddr, SourceAddr, nullptr, PPF_BlueprintDebugView);
 				UObjectProperty* ObjectProperty = Cast<UObjectProperty>(Property);
-				if (ObjectProperty != nullptr)
+				UStructProperty* StructProperty = Cast<UStructProperty>(Property);
+				UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
+				if (ObjectProperty != nullptr) 
 				{
-					ClassBuilder(CPPType, PropertyName, UnrealValue, CPPValue, ObjectProperty->GetObjectPropertyValue(ObjectProperty->ContainerPtrToValuePtr<void>(Obj)));								
+					ClassBuilder->BuildObjectRow(CPPType, PropertyName, UnrealValue, CPPValue, Obj);								
 				}
+				else if (StructProperty != nullptr)
+				{
+					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, CPPValue);
+				}
+				else if (ArrayProperty != nullptr)
+				{
+					ClassBuilder->BuildArrayRow(CPPType, PropertyName, UnrealValue, CPPValue, Obj, ArrayProperty);												
+				}						
 				else
 				{
-					ClassBuilder(CPPType, PropertyName, UnrealValue, CPPValue); 
-				}				
+					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, CPPValue); 
+				}					
 			}
 		}
 		/*
@@ -930,6 +968,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& DetailLayout)
 	}
 	return;
 }
+#pragma optimize("", on)
 
 void SUBrowser::AddObjectToHistory(TSharedPtr<FBrowserObject> Item)
 {

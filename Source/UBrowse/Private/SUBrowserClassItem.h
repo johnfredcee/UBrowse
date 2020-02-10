@@ -92,4 +92,4 @@ private:
 
 };
 
-#undef LOCTEXT_NANESPACE
+#undef LOCTEXT_NAMESPACE
