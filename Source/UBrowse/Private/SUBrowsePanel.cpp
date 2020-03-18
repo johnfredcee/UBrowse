@@ -1,7 +1,8 @@
+
+#include "SUBrowsePanel.h"
 #include "UBrowsePrivatePCH.h"
 #include "UBrowseGraph.h"
 #include "UBrowseSchema.h"
-#include "SUBrowsePanel.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowsePanel"
 

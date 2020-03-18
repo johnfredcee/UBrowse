@@ -1,3 +1,4 @@
+#include "SUBrowser.h"
 #include "UBrowsePrivatePCH.h"
 
 #include "UnrealEd.h"
@@ -18,14 +19,13 @@
 #include "PropertyCustomizationHelpers.h"
 
 #include "ClassViewerModule.h"
-#include "SClassPickerDialog.h"
+#include "Kismet2/SClassPickerDialog.h"
 #include "PropertyEditorModule.h"
 #include "LevelEditor.h"
 #include "SUBrowserTableRow.h"
 #include "SUBrowsePropertyTableRow.h"
 #include "SUBrowserClassItem.h"
 #include "SUBrowsePanel.h"
-#include "SUBrowser.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowserMenu"
 

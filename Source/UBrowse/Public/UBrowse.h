@@ -10,7 +10,7 @@
 #include "GraphEditor.h"
 #include "EdGraphUtilities.h"
 #include "EdGraph/EdGraphNodeUtils.h"
-#include "ModuleManager.h"
+#include "Modules/ModuleManager.h"
 #include "Editor/PropertyEditor/Public/PropertyEditing.h"
 
 

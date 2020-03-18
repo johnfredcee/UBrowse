@@ -1,10 +1,10 @@
 
+#include "SUBrowseNode.h"
 #include "UBrowsePrivatePCH.h"
 #include "GraphEditorSettings.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EditorClassUtils.h"
 #include "UBrowseNode.h"
-#include "SUBrowseNode.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowseNode" 
 

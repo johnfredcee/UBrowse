@@ -1,7 +1,7 @@
 // Some copyright should be here...
 
-#include "UBrowsePrivatePCH.h"
 #include "UBrowseCommands.h"
+#include "UBrowsePrivatePCH.h"
 
 #define LOCTEXT_NAMESPACE "FUBrowseModule"
 

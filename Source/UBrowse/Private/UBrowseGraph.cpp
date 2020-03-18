@@ -1,8 +1,8 @@
 
-#include "UBrowsePrivatePCH.h"
-#include "UObjectHash.h"
-#include "UBrowseNode.h"
 #include "UBrowseGraph.h"
+#include "UObject/UObjectHash.h"
+#include "UBrowsePrivatePCH.h"
+#include "UBrowseNode.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseGraph"
 

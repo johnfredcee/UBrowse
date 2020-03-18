@@ -1,5 +1,6 @@
 // Some copyright should be here...
 
+#include "UBrowse.h"
 #include "UBrowsePrivatePCH.h"
 #include "SlateBasics.h"
 #include "SlateExtras.h"

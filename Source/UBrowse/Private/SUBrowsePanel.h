@@ -3,6 +3,8 @@
 #include "Engine.h"
 #include "GraphEditor.h"
 
+class UBrowseGraph;
+
 class SUBrowsePanel : public SCompoundWidget
 {
 public:

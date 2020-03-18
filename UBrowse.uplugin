@@ -3,8 +3,8 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "UBrowse",
-	"Description": "",
-	"Category": "Other",
+	"Description": "UObject Browser",
+	"Category": "Developer",
 	"CreatedBy": "John Connors",
 	"CreatedByURL": "",
 	"DocsURL": "",
@@ -20,5 +20,5 @@
 	"EnabledByDefault": false,
 	"CanContainContent": false,
 	"IsBetaVersion": false,
-	"Installed": false
+	"Installed": true
 }

@@ -4,6 +4,7 @@
 SoundCueGraphSchema.cpp
 =============================================================================*/
 
+#include "UBrowseSchema.h"
 #include "UBrowsePrivatePCH.h"
 #include "UnrealEd.h"
 #include "Editor/UnrealEd/Public/Toolkits/AssetEditorManager.h"
@@ -11,8 +12,8 @@ SoundCueGraphSchema.cpp
 #include "GraphEditorActions.h"
 #include "GraphEditor.h"
 #include "ConnectionDrawingPolicy.h"
-#include "UBrowseSchema.h"
 #include "UBrowseNode.h"
+#include "UBrowseEditorCommands.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseSchema"
 
@@ -122,17 +123,21 @@ void UBrowseSchema::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenu
 }
 
 
-void UBrowseSchema::GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const
+void UBrowseSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-	const UBrowseNode* Node = Cast<UBrowseNode>(InGraphNode);
+	Super::GetContextMenuActions(Menu, Context);
+
+	const UBrowseNode* Node = Cast<UBrowseNode>(Context->Node);
 	if ((Node != nullptr) && (Node->GetUObject() != nullptr) && (Node->GetUObject()->IsAsset()))
 	{
-		MenuBuilder->BeginSection("UBrowseGraphSchemaNodeActions", LOCTEXT("UBrowseActionsMenuHeader", "UBrowse Node Actions"));
-		MenuBuilder->AddMenuEntry(LOCTEXT("UBrowseOpenAsset", "OpenInAssetEditor"),
-			LOCTEXT("UBrowseOpenAsset_Tooltip", "Opens the asset represented by this UObject in the asset Editor"),
-			FSlateIcon(),
-			FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));
-		MenuBuilder->EndSection();
+		FToolMenuSection& Section = Menu->AddSection("UBrowseGraphSchemaNodeActions", LOCTEXT("UBrowseActionsMenuHeader", "UBrowse Node Actions"));
+		Section.AddMenuEntry(FUBrowseEditorCommands::Get().ViewAsset);
+		// pre- 4.24 code
+		// MenuBuilder->AddMenuEntry(LOCTEXT("UBrowseOpenAsset", "OpenInAssetEditor"),
+		// 	LOCTEXT("UBrowseOpenAsset_Tooltip", "Opens the asset represented by this UObject in the asset Editor"),
+		// 	FSlateIcon(),
+		// 	FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));
+		// MenuBuilder->EndSection();
 
 	}
 };

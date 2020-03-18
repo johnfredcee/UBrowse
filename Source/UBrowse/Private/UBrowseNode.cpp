@@ -1,6 +1,7 @@
 
-#include "UBrowsePrivatePCH.h"
 #include "UBrowseNode.h"
+#include "UBrowseGraph.h"
+#include "UBrowsePrivatePCH.h"
 
 namespace {
 	FString GetFlagsAsText(EObjectFlags Param)

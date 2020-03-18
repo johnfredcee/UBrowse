@@ -1,4 +1,4 @@
-// Some copyright should be here...
+
 
 using UnrealBuildTool;
 
@@ -43,6 +43,7 @@ public class UBrowse : ModuleRules
 				"InputCore",
 				"UnrealEd",
 				"LevelEditor",
+				"ToolMenus",
                 "ClassViewer",
                 "GraphEditor",
                 "PropertyEditor",

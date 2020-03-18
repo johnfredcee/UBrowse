@@ -1,7 +1,10 @@
 
+
 #pragma once
 
 #include "EdGraph/EdGraphSchema.h"
+#include "ToolMenus.h"
+#include "K2Node.h"
 #include "UBrowseSchema.generated.h"
 
 /** Action to switch visualisation mode of the graph **/
@@ -43,7 +46,7 @@ class UBrowseSchema : public UEdGraphSchema
 	virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override { return GT_Ubergraph; }
 	virtual	FConnectionDrawingPolicy* CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-	virtual void GetContextMenuActions(const UEdGraph* CurrentGraph, const UEdGraphNode* InGraphNode, const UEdGraphPin* InGraphPin, class FMenuBuilder* MenuBuilder, bool bIsDebugging) const override;
+	virtual void GetContextMenuActions(UToolMenu* Menu,  UGraphNodeContextMenuContext* Context) const override;
 	//~ End EdGraphSchema Interface
 
 };
