@@ -910,7 +910,8 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 				UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
 				if (ObjectProperty != nullptr) 
 				{
-					ClassBuilder->BuildObjectRow(CPPType, PropertyName, UnrealValue, CPPValue, Obj);								
+					UObject* PropertyObject = ObjectProperty->GetObjectPropertyValue(SourceAddr);
+					ClassBuilder->BuildObjectRow(CPPType, PropertyName, UnrealValue, CPPValue, PropertyObject);								
 				}
 				else if (StructProperty != nullptr)
 				{

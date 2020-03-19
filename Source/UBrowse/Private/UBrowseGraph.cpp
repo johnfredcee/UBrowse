@@ -23,6 +23,7 @@ UBrowseGraph::UBrowseGraph(const FObjectInitializer& ObjectInitializer)
 
 }
 
+#pragma optimize("", off)
 void UBrowseGraph::RefreshGraph(UObject* pRoot)
 {
 	constexpr int32 nodeYSpacing = 150;
@@ -125,9 +126,12 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 				FGraphNodeCreator<UBrowseNode> GeneratedNodeBuilder(*this);
 				auto GeneratedNode = GeneratedNodeBuilder.CreateNode(false);
 				GeneratedNode->SetupNode(FIntPoint(nodeXPos, NodeY), GeneratedClass);
-				ThisNode->GetGeneratesPin()->Direction = EGPD_Output;
-				GeneratedNode->GetGeneratedByPin()->Direction = EGPD_Input;
-				ThisNode->GetGeneratesPin()->MakeLinkTo(GeneratedNode->GetGeneratedByPin());
+				if (GeneratedNode->GetGeneratedByPin() != nullptr)
+				{
+					ThisNode->GetGeneratesPin()->Direction = EGPD_Output;
+					GeneratedNode->GetGeneratedByPin()->Direction = EGPD_Input;
+					ThisNode->GetGeneratesPin()->MakeLinkTo(GeneratedNode->GetGeneratedByPin());
+				}
 				GeneratedNodeBuilder.Finalize();
 			}
 		}
@@ -160,7 +164,7 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 		PrevNode = ThisNode;
 	}
 }
-
+#pragma optimize("", on)
 
 void UBrowseGraph::RemoveAllNodes()
 {
