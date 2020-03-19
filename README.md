@@ -2,7 +2,11 @@
 
 Unreal Engine plugin for browsing a graph of the low/level package/object structure and UPROPERTY fields of live objects in the engine.
 
-It compiles against Unreal Engine 4.14
+It shows a great amount of detail about individual UObjects including the low level flags which is handy for debugging; it also lets you navigate among UOBJECTS and UCLASSES hypertext style. It's a wholly different view of the engine which is difficult to capture from a debugger. It shows a bit of structure among components : Owner / Owned relationships and among Blueprints (GeneratedClass / GeneratedBy).
+It's a useful tool for exploring the low level structure of the engine.
+
+It compiles against Unreal Engine 4.24. It will probably need bit of a rewrite for 4.25 (UProperty no longer being a UObbject, and all).
+
 
 ![Screenshot](Docs/UBROWSE2.png)
 
