@@ -563,18 +563,42 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 
 		void BuildArrayRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context, UArrayProperty* ArrayProperty)
 		{
-			FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayProperty->ContainerPtrToValuePtr<void>(Context));
+			IDetailGroup& NewGroup = Group.AddGroup(ArrayProperty->GetFName(), ArrayProperty->GetDisplayNameText());
+			IDetailGroup& OldGroup = Group;
+			Group = NewGroup;
+			void* ArrayPropInstAddress = ArrayProperty->ContainerPtrToValuePtr<void>(Context);
+			FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayPropInstAddress);
 			FString ArrayValueText = FString::Printf(TEXT("%d Elements"), ArrayHelper.Num());
 			BuildSimpleRow(NameTooltipText, NameText, ArrayValueText, TooltipText);
 			UProperty* ArrayValueProperty = ArrayProperty->Inner;
+			UObjectProperty* ObjectArrayValueProperty = Cast<UObjectProperty>(ArrayProperty->Inner);
+			UClass* ElementClass = nullptr;
+			if (ObjectArrayValueProperty != nullptr)
+			{
+				ElementClass = ObjectArrayValueProperty->PropertyClass;
+			}
 			for (int32 i = 0; i < ArrayHelper.Num(); i++)
 			{
 				FString CPPValue, UnrealValue, IndexText;
-				ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
-				ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
-				IndexText = FString::Printf(TEXT("[%d]"), i);
-				BuildSimpleRow(NameTooltipText, IndexText, UnrealValue, CPPValue);
+				if (ObjectArrayValueProperty == nullptr)
+				{
+					ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					IndexText = FString::Printf(TEXT("[%d]"), i);
+					BuildSimpleRow(NameTooltipText, IndexText, UnrealValue, CPPValue);
+				}
+				else
+				{
+					UObject* ArrayElement = ObjectArrayValueProperty->GetObjectPropertyValue(ArrayHelper.GetRawPtr(i));
+					ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					auto CPPType = ArrayValueProperty->GetCPPType();
+					BuildObjectRow(CPPType, IndexText, UnrealValue, CPPValue, ArrayElement);								
+				}
+				
 			}
+			Group = OldGroup;
+
 		}
 		
 
