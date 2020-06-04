@@ -540,7 +540,6 @@ void SUBrowser::OnSortByChanged(const EColumnSortPriority::Type SortPriority, co
 	RefreshList();
 }
 
-#pragma optimize("", off)
 void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 {
 	struct UBrowseRowBuilder : public TSharedFromThis<UBrowseRowBuilder>
@@ -993,7 +992,6 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 	}
 	return;
 }
-#pragma optimize("", on)
 
 void SUBrowser::AddObjectToHistory(TSharedPtr<FBrowserObject> Item)
 {
