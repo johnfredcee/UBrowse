@@ -37,10 +37,12 @@ public:
 
 	void RefreshList();
 
+	void ViewUObject(UObject* InObjectToView);
+
 
 private:
 
-	DECLARE_DELEGATE_OneParam(FOnNewObjectView, FBrowserObject*);
+	DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
 
 	FOnNewObjectView OnNewObjectView;
 

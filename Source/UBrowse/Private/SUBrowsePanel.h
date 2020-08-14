@@ -8,7 +8,7 @@ class UBrowseGraph;
 class SUBrowsePanel : public SCompoundWidget
 {
 public:
-	DECLARE_DELEGATE_OneParam(FOnNewObjectView, FBrowserObject*);
+	DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
 
 	SLATE_BEGIN_ARGS(SUBrowsePanel) { }
 		SLATE_EVENT(FSingleNodeEvent, OnNodeDoubleClicked )
@@ -26,7 +26,7 @@ public:
 	void Construct(const FArguments& InArgs);
 
 	/* Called when a new root node is selected */
-	void OnNewRootNode(FBrowserObject* object);
+	void OnNewRootNode(TSharedPtr<FBrowserObject> InObject);
 
 	FGraphAppearanceInfo GetAppearanceInfo() const;
 

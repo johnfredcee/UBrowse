@@ -3,12 +3,12 @@
 
 #include "UnrealEd.h"
 #include "SourceCodeNavigation.h"
-#include "SlateBasics.h"
-#include "SlateExtras.h"
 
 #include "UBrowseStyle.h"
 #include "UBrowseCommands.h"
 
+#include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Framework/Docking/TabManager.h"
 #include "IDetailsView.h"
 #include "PropertyEditing.h"
 #include "EditorFontGlyphs.h"
@@ -453,8 +453,29 @@ void SUBrowser::OnObjectListSelectionChanged(TSharedPtr<FBrowserObject> InItem, 
 	Selection.Add(InItem->Object);
 	AddObjectToHistory(InItem);
 	PropertyView->SetObjects(Selection);
-	FBrowserObject* SelectedObject(InItem.Get());
-	OnNewObjectView.Execute(SelectedObject);
+	OnNewObjectView.Execute(InItem);
+}
+
+void SUBrowser::ViewUObject(UObject* InObjectToView)
+{
+	if (InObjectToView == nullptr)
+	{
+		return;
+	}
+	// set filters to include everything
+	bShouldIncludeDefaultSubObjects = true;
+	bShouldIncludeArchetypeObjects = true;
+	bShouldIncludeClassDefaultObjects = true;
+	FilterClass = UObject::StaticClass();
+
+	TArray<TWeakObjectPtr<UObject> > Selection;
+	Selection.Add(InObjectToView);
+	auto WeakPtr = TWeakObjectPtr<UObject>(InObjectToView);
+	auto BrowserObject =  MakeShared<FBrowserObject>(WeakPtr);
+	AddObjectToHistory(BrowserObject);
+	PropertyView->SetObjects(Selection);
+	OnNewObjectView.Execute(BrowserObject);
+
 }
 
 
@@ -540,7 +561,6 @@ void SUBrowser::OnSortByChanged(const EColumnSortPriority::Type SortPriority, co
 	RefreshList();
 }
 
-#pragma optimize("", off)
 void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 {
 	struct UBrowseRowBuilder : public TSharedFromThis<UBrowseRowBuilder>
@@ -605,22 +625,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 		void BuildObjectRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context)
 		{
 			auto FindUBrowserWidget = []()
-			{
-				TSharedPtr<SUBrowser> UBrowserWidget;
-				FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-				TSharedPtr<IDetailsView> ParentView = EditModule.FindDetailView(FName(TEXT("UBrowse")));
-				FWidgetPath WidgetPath;
-				FSlateApplication::Get().FindWidgetWindow(ParentView.ToSharedRef(), WidgetPath);
-				FArrangedChildren& ArrangedChildren = WidgetPath.Widgets;
-				for (int iWidget = 0; iWidget < ArrangedChildren.Num(); iWidget++)
-				{
-					FArrangedWidget ArrangedWidget = ArrangedChildren[iWidget];
-					if (ArrangedWidget.Widget->GetTag() == FName(TEXT("UBrowseTag"))) {
-						TSharedPtr<SWidget> WidgetPtr(ArrangedWidget.Widget);
-						UBrowserWidget = StaticCastSharedPtr<SUBrowser>(WidgetPtr);
-						return UBrowserWidget;
-					}
-				}			
+			{				
+				TSharedRef<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->InvokeTab(FUBrowseModule::UBrowseTabName);
+				TSharedRef<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());
 				return UBrowserWidget;
 			};
 
@@ -993,7 +1000,6 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 	}
 	return;
 }
-#pragma optimize("", on)
 
 void SUBrowser::AddObjectToHistory(TSharedPtr<FBrowserObject> Item)
 {
@@ -1039,8 +1045,7 @@ void SUBrowser::OnHistorySelectionChanged(TSharedPtr<FBrowserObject> InItem, ESe
 	const UObject* HistoryObject = InItem->Object.Get();
 	Selection.Add(HistoryObject);
 	PropertyView->SetObjects(Selection);
-	FBrowserObject* SelectedObject(InItem.Get());
-	OnNewObjectView.Execute(SelectedObject);
+	OnNewObjectView.Execute(InItem);
 }
 
 void SUBrowser::PopulateHistoryList()
@@ -1048,7 +1053,7 @@ void SUBrowser::PopulateHistoryList()
 	History.Empty();
 	TSharedPtr< FBrowserObject >  InitialObject(new FBrowserObject(UObject::StaticClass()));
 	History.Add(InitialObject);
-	OnNewObjectView.Execute(InitialObject.Get());
+	OnNewObjectView.Execute(InitialObject);
 }
 
 

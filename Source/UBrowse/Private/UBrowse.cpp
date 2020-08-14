@@ -4,13 +4,16 @@
 #include "UBrowsePrivatePCH.h"
 #include "SlateBasics.h"
 #include "SlateExtras.h"
+#include "LevelEditor.h"
+#include "IContentBrowserSingleton.h"
+#include "ContentBrowserModule.h"
 #include "UBrowseStyle.h"
 #include "UBrowseCommands.h"
-#include "LevelEditor.h"
+#include "UBrowseEditorCommands.h"
 #include "UBrowseNode.h"
 #include "SUBrowser.h"
 
-static const FName UBrowseTabName("UBrowse");
+const FName FUBrowseModule::UBrowseTabName("UBrowse");
 
 #define LOCTEXT_NAMESPACE "FUBrowseModule"
 
@@ -37,12 +40,18 @@ void FUBrowseModule::StartupModule()
 		FUBrowseStyle::ReloadTextures();
 
 		FUBrowseCommands::Register();
+		FUBrowseEditorCommands::Register();
 
 		PluginCommands = MakeShareable(new FUICommandList);
 
 		PluginCommands->MapAction(
 			FUBrowseCommands::Get().OpenPluginWindow,
-			FExecuteAction::CreateRaw(this, &FUBrowseModule::PluginButtonClicked),
+			FExecuteAction::CreateRaw(this, &FUBrowseModule::OpenUBrowser),
+			FCanExecuteAction());
+
+		PluginCommands->MapAction(
+			FUBrowseCommands::Get().BrowseUObject,
+			FExecuteAction::CreateRaw(this, &FUBrowseModule::OpenUBrowser),
 			FCanExecuteAction());
 
 		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
@@ -52,7 +61,7 @@ void FUBrowseModule::StartupModule()
 
 		{
 			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-			MenuExtender->AddMenuExtension("WindowLayout", EExtensionHook::After, PluginCommands,
+			MenuExtender->AddMenuExtension("Miscellaneous", EExtensionHook::After, PluginCommands,
 				FMenuExtensionDelegate::CreateRaw(this, &FUBrowseModule::AddMenuExtension));
 
 			LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
@@ -71,14 +80,21 @@ void FUBrowseModule::StartupModule()
 			.SetMenuType(ETabSpawnerMenuType::Hidden);
 	}
 
+	// Register content browser hook
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));	
+	TArray<FContentBrowserMenuExtender_SelectedAssets>& CBAssetMenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
+	CBAssetMenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateRaw(this, &FUBrowseModule::OnExtendContentBrowserAssetSelectionMenu));
+	ContentBrowserAssetExtenderDelegateHandle = CBAssetMenuExtenderDelegates.Last().GetHandle();
+
 }
 
 void FUBrowseModule::ShutdownModule()
 {
 	if (!IsRunningCommandlet())
 	{
-		// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-		// we call this function before unloading the module.
+		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));	
+		TArray<FContentBrowserMenuExtender_SelectedAssets>& CBAssetMenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
+		CBAssetMenuExtenderDelegates.RemoveAll([this](const FContentBrowserMenuExtender_SelectedAssets& Delegate) { return Delegate.GetHandle() == ContentBrowserAssetExtenderDelegateHandle; });
 		FUBrowseStyle::Shutdown();
 		FUBrowseCommands::Unregister();
 		FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UBrowseTabName);
@@ -86,6 +102,7 @@ void FUBrowseModule::ShutdownModule()
 			FEdGraphUtilities::UnregisterVisualNodeFactory(m_NodeFactory);
 			m_NodeFactory.Reset();
 		}
+		
 	}
 
 }
@@ -99,10 +116,24 @@ TSharedRef<SDockTab> FUBrowseModule::OnSpawnPluginTab(const FSpawnTabArgs& Spawn
 	return DockTab;
 }
 
-void FUBrowseModule::PluginButtonClicked()
+void FUBrowseModule::OpenUBrowser()
 {
 	FGlobalTabmanager::Get()->InvokeTab(UBrowseTabName);
 }
+
+void FUBrowseModule::ViewInUBrowse(const TArray<FAssetData>& SelectedAssets)
+{
+	TSharedRef<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->InvokeTab(UBrowseTabName);
+	if (SelectedAssets.Num() >= 1)
+	{
+		TSharedRef<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());
+		const FAssetData Asset{SelectedAssets[0]};
+		UObject* ObjectToView = Asset.GetAsset();
+		UBrowserWidget->ViewUObject(ObjectToView);
+	}
+
+}
+
 
 void FUBrowseModule::AddMenuExtension(FMenuBuilder& Builder)
 {
@@ -113,6 +144,34 @@ void FUBrowseModule::AddToolbarExtension(FToolBarBuilder& Builder)
 {
 	Builder.AddToolBarButton(FUBrowseCommands::Get().OpenPluginWindow);
 }
+
+TSharedRef<FExtender> FUBrowseModule::OnExtendContentBrowserAssetSelectionMenu(const TArray<FAssetData>& SelectedAssets)
+{
+	TSharedRef<FExtender> Extender(new FExtender());
+	
+	Extender->AddMenuExtension(
+		"FindInExplorer",
+		EExtensionHook::After,
+		nullptr,
+		FMenuExtensionDelegate::CreateLambda([this, SelectedAssets](FMenuBuilder& MenuBuilder)
+		{
+			MenuBuilder.AddMenuEntry(
+				NSLOCTEXT("UBrowse", "ShowInUBrowse_MenuLabel", "Show In UBrowse"),
+				NSLOCTEXT("UBrowse", "ShowInUBrowse_Tooltip", "Open UObject in UBrowse Window"),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateLambda([this, SelectedAssets](){ this->ViewInUBrowse(SelectedAssets); }))
+			);
+		}));
+
+	return Extender;
+}
+
+void FUBrowseModule::CreateAssetContextMenu(FMenuBuilder& MenuBuilder)
+{
+	MenuBuilder.AddMenuEntry(FUBrowseCommands::Get().BrowseUObject);
+}
+
+
 
 #undef LOCTEXT_NAMESPACE
 

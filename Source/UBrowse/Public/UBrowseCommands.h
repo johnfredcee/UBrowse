@@ -14,9 +14,13 @@ public:
 	{
 	}
 
+
 	// TCommands<> interface
 	virtual void RegisterCommands() override;
+	// End of TCommands<> interface
 
-public:
+	// Goes direct to the plugin window
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
+	// Goes to the plugin window via specific UObject
+	TSharedPtr< FUICommandInfo > BrowseUObject;
 };

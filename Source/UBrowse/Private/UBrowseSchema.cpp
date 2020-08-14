@@ -131,14 +131,12 @@ void UBrowseSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenu
 	if ((Node != nullptr) && (Node->GetUObject() != nullptr) && (Node->GetUObject()->IsAsset()))
 	{
 		FToolMenuSection& Section = Menu->AddSection("UBrowseGraphSchemaNodeActions", LOCTEXT("UBrowseActionsMenuHeader", "UBrowse Node Actions"));
-		Section.AddMenuEntry(FUBrowseEditorCommands::Get().ViewAsset);
-		// pre- 4.24 code
-		// MenuBuilder->AddMenuEntry(LOCTEXT("UBrowseOpenAsset", "OpenInAssetEditor"),
-		// 	LOCTEXT("UBrowseOpenAsset_Tooltip", "Opens the asset represented by this UObject in the asset Editor"),
-		// 	FSlateIcon(),
-		// 	FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));
-		// MenuBuilder->EndSection();
-
+		Section.AddMenuEntry(
+			"MarkDependentCompilableAssetsDirty",
+			LOCTEXT("MarkDependentCompilableAssetsDirtyLabel", "Mark dependent compilable assets dirty"),
+			LOCTEXT("MarkDependentCompilableAssetsDirtyToolTip", "Finds all niagara assets which depend on this asset either directly or indirectly,\n and marks them dirty so they can be saved with the latest version."),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));		
 	}
 };
 

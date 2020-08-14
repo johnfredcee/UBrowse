@@ -5,6 +5,7 @@
 
 #include "AssetData.h"
 #include "ScopedTransaction.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
 #include "EdGraph/EdGraphPin.h"
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditor.h"
@@ -48,8 +49,15 @@ public:
 	virtual void ShutdownModule() override;
 	
 	/** This function will be bound to Command (by default it will bring up plugin window) */
-	void PluginButtonClicked();
-	
+	void OpenUBrowser();
+
+	FDelegateHandle ContentBrowserAssetExtenderDelegateHandle;
+	TSharedRef<FExtender> OnExtendContentBrowserAssetSelectionMenu(const TArray<FAssetData>& SelectedAssets);
+	void CreateAssetContextMenu(FMenuBuilder& MenuBuilder);
+	void ViewInUBrowse(const TArray<FAssetData>& SelectedAssets);
+
+	static const FName UBrowseTabName;
+
 private:
 
 	void AddToolbarExtension(FToolBarBuilder& Builder);

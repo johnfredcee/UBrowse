@@ -6,10 +6,10 @@
 #include "Framework/Commands/Commands.h"
 
 class FUBrowseEditorCommands : public TCommands<FUBrowseEditorCommands>
-{
-    FUBrowseEditorCommands();
-    
+{  
 public:
+	FUBrowseEditorCommands();
+
 	// TCommands<> interface
 	virtual void RegisterCommands() override;
 	// End of TCommands<> interface

@@ -47,7 +47,7 @@ FGraphAppearanceInfo SUBrowsePanel::GetAppearanceInfo() const
 	return AppearanceInfo;
 }
 
-void SUBrowsePanel::OnNewRootNode(FBrowserObject* InObject)
+void SUBrowsePanel::OnNewRootNode(TSharedPtr<FBrowserObject> InObject)
 {
 	AppearanceInfo.CornerText = FText::FromString(GetNameSafe(InObject->Object.Get()));
 	AppearanceInfo.ReadOnlyText = FText::FromString(GetNameSafe(InObject->Object.Get()));

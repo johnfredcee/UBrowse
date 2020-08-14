@@ -61,6 +61,10 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 		if (!ThisNode->GetCDOPin()->bHidden)
 		{
 			UClass* NodeClass = Cast<UClass>(NodeObject);
+			if (NodeClass == nullptr)
+			{
+				NodeClass = NodeObject->GetClass();
+			}
 			if (NodeClass)
 			{
 				TArray<UEdGraphNode*> Siblings;
@@ -70,7 +74,7 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 				FGraphNodeCreator<UBrowseNode> CDONodeBuilder(*this);
 				auto CDONode = CDONodeBuilder.CreateNode(false);
 				CDONode->SetupNode(FIntPoint(nodeXPos, NodeY), NodeCDO);
-				CDONode->GetChildrenPin()->PinName = TEXT("Class");
+				CDONode->GetChildrenPin()->PinName = TEXT("Default");
 				ThisNode->GetCDOPin()->MakeLinkTo(CDONode->GetChildrenPin());
 				CDONodeBuilder.Finalize();
 			}
