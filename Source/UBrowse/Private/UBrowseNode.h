@@ -24,6 +24,8 @@ public:
 	const UObject* GetUObject() const { return NodeObject.IsValid() ? NodeObject.Get() : nullptr; }
 	FText GetTooltipText() const override;
 
+	bool IsFixedInPlace() const { return bIsFixedInPlace; }
+	void FixInPlace() { bIsFixedInPlace = true; }
 	// UEdGraphNode implementation
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual void AllocateDefaultPins() override;
@@ -33,7 +35,7 @@ private:
 	FText NodeTitle;
 	FString ShortDesc;
 	FString LongDesc;
-
+	TWeakObjectPtr<UObject> NodeObject;
 	UEdGraphPin* ChildrenPin = nullptr;
 	UEdGraphPin* ParentPin = nullptr;
 	UEdGraphPin* CDOPin = nullptr;
@@ -41,5 +43,5 @@ private:
 	UEdGraphPin* GeneratesPin = nullptr;
 	UEdGraphPin* GeneratedByPin = nullptr;
 	const UClass*  NodeClass = nullptr;
-	TWeakObjectPtr<UObject> NodeObject;
+	bool bIsFixedInPlace;
 };

@@ -221,40 +221,68 @@ bool SUBrowseNode::RequiresSecondPassLayout() const
 	return true;
 }
 
-#pragma optimize("", off)
 void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNode> >& NodeToWidgetLookup) const
 {
 	UBrowseNode* TransNode = CastChecked<UBrowseNode>(GraphNode);
+	if (!TransNode->IsFixedInPlace())
+		return;
+	const float NodeGap{50.0f};
+	bool bStartedLeftHandLayout = false;
+	float LeftHandSide;
+	bool bStartedRightHandLayout = false;
+	float RightHandSide;
 
-	// Input (Left) Nodes
-	if ((!TransNode->GetOwnerPin()->bHidden) && (TransNode->GetOwnerPin()->LinkedTo.Num() > 0))
+	const TArray<UEdGraphPin*>& Pins{TransNode->GetAllPins()};
+
+	// line them up on the left
+	for(auto& Pin : Pins)
 	{
-		UEdGraphPin* LinkedPin = TransNode->GetOwnerPin()->LinkedTo[0];
-		UBrowseNode* LeftNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D LeftNodeSize = NodeToWidgetLookup.FindChecked(LeftNode)->GetDesiredSize();		
-		LeftNode->NodePosX = (TransNode->NodePosX - LeftNodeSize.X) - 50.0f;
+		if (Pin->Direction == EGPD_Input)
+		{
+			if ((Pin->GetName() == TEXT("Inner")) || (Pin->GetName() == TEXT("Outer")))
+			{
+				continue;
+			}
+			if (!bStartedLeftHandLayout)
+			{
+				LeftHandSide = TransNode->NodePosX;
+				bStartedLeftHandLayout = true;
+			}
+			if (Pin->LinkedTo.Num() < 1)
+				continue;
+			// get the node we want to go on the left
+			UEdGraphPin* LinkedPin = Pin->LinkedTo[0];
+			UBrowseNode* LeftNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+			FVector2D LeftNodeSize = NodeToWidgetLookup.FindChecked(LeftNode)->GetDesiredSize();		
+			LeftNode->NodePosX = (LeftHandSide - LeftNodeSize.X) - NodeGap;
+			LeftHandSide = LeftNode->NodePosX;
+		}
 	}
 
-	// Output (Right) Nodes
-	if ((!TransNode->GetCDOPin()->bHidden) && (TransNode->GetCDOPin()->LinkedTo.Num() > 0))
+	// line them up on the right
+	for(auto Pin : Pins)
 	{
-		UEdGraphPin* LinkedPin = TransNode->GetCDOPin()->LinkedTo[0];
-		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
-		RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
-	}
-
-	if ((!TransNode->GetGeneratesPin()->bHidden) && (TransNode->GetGeneratesPin()->LinkedTo.Num() > 0))
-	{
-		UEdGraphPin* LinkedPin = TransNode->GetGeneratesPin()->LinkedTo[0];
-		UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
-		FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();	
-		RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
-		//LeftNode->NodePosX = (TransNode->NodePosX - LeftNodeSize.X) - 50.0f;
-		// FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
-		// RightNode->NodePosX = (TransNode->NodePosX + TransNodeSize.X) + 50.0f;
+		if (Pin->Direction == EGPD_Output)
+		{
+			if ((Pin->GetName() == "Inner") || (Pin->GetName() == "Outer"))
+			{
+				continue;
+			}
+			if (!bStartedRightHandLayout)
+			{
+				FVector2D TransNodeSize = NodeToWidgetLookup.FindChecked(TransNode)->GetDesiredSize();
+				RightHandSide = (TransNode->NodePosX + TransNodeSize.X) + NodeGap;
+				bStartedRightHandLayout = true;
+			}		
+			if (Pin->LinkedTo.Num() < 1)
+				continue;
+			UEdGraphPin* LinkedPin = Pin->LinkedTo[0];
+			UBrowseNode* RightNode = Cast<UBrowseNode>(LinkedPin->GetOwningNode());
+			FVector2D RightNodeSize = NodeToWidgetLookup.FindChecked(RightNode)->GetDesiredSize();	
+			RightNode->NodePosX = RightHandSide;
+			RightHandSide = RightNode->NodePosX + RightNodeSize.X + NodeGap;
+		}
 	}
 }
-#pragma optimize("", on)
 
 #undef LOCTEXT_NAMESPACE

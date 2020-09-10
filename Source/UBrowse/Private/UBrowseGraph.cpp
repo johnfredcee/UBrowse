@@ -6,32 +6,23 @@
 
 #define LOCTEXT_NAMESPACE "UBrowseGraph"
 
-FVector2D GetNodeSize(const SGraphEditor& GraphEditor, const UEdGraphNode* Node)
-{
-	FSlateRect Rect;
-	if (GraphEditor.GetBoundsForNode(Node, Rect, 0.f))
-	{
-		return FVector2D(Rect.Right - Rect.Left, Rect.Bottom - Rect.Top);
-	}
-
-	return FVector2D(Node->NodeWidth, Node->NodeHeight);
-}
-
 UBrowseGraph::UBrowseGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 
 }
 
-#pragma optimize("", off)
+
 void UBrowseGraph::RefreshGraph(UObject* pRoot)
 {
 	constexpr int32 nodeYSpacing = 150;
 	constexpr int32 nodeYStart = 50;
 	constexpr int32 nodeXPos = 50;
 
+	/* clear previous graph */
 	RemoveAllNodes();
-	// walk from GEngine
+
+	/* Walk the outer chain */
 	TArray<UObject*> Outers;
 	UObject* Root = pRoot == nullptr ? GEngine : pRoot;
 	UObject *Outermost = nullptr;
@@ -41,18 +32,17 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 		Outers.Push(Outermost);
 		Outermost = Outermost->GetOuter();
 	}
+	// start building the graph, outermost first
 	uint32 NodeY = nodeYStart;
 	int32 OuterCount = Outers.Num() - 1;
-	//FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
-	UBrowseNode*  ThisNode; // = NodeBuilder.CreateNode(false);
-	//ThisNode->SetupNode(FIntPoint(nodeXPos, NodeY), Outers[OuterCount]);
-	//NodeBuilder.Finalize();
+	UBrowseNode*  ThisNode; 
 	UBrowseNode*  PrevNode = nullptr;
 	for (int32 i = OuterCount; i >= 0; i--) {
 		FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
 		UObject *NodeObject = Outers[i];
 		ThisNode = NodeBuilder.CreateNode(false);
 		ThisNode->SetupNode(FIntPoint(nodeXPos, NodeY), NodeObject);
+		ThisNode->FixInPlace();
 		NodeBuilder.Finalize();
 		if (PrevNode != nullptr)
 		{
@@ -140,35 +130,10 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 			}
 		}
 
-		/*
-		TArray<UObject*> Results;
-		GetObjectsWithOuter(PrevNode->GetUObject(), Results, false);
-		uint32 SiblingNodeY = NodeY - 100;
-		uint32 SiblingNodeX = 50;
-		TArray<UEdGraphNode*> Siblings;
-		Siblings.Push(PrevNode);
-		for (int32 j = 0; j < Results.Num(); j++) {
-			// we don't want to duplicate the node this is
-			if (Results[j] == ThisNode->GetUObject())
-				continue;
-			// we don't want to include browser nodes in the results!
-			if (Results[j]->GetClass()->IsChildOf(UEdGraphNode::StaticClass()))
-				continue;
-			if (Results[j]->GetClass()->IsChildOf(UEdGraphPin::StaticClass()))
-				continue;
-			FIntRect Bounds = FEdGraphUtilities::CalculateApproximateNodeBoundaries(Siblings);
-			SiblingNodeX = Bounds.Width() + 200;
-			UBrowseNode* SiblingNode = Cast<UBrowseNode>(CreateNode(UBrowseNode::StaticClass(), false));
-			SiblingNode->SetupNode(FIntPoint(SiblingNodeX, SiblingNodeY), Results[j]);
-			//SiblingNodeX += SiblingNode->NodeWidth;
-			Siblings.Push(SiblingNode);
-		}
-		*/
 		NodeY += nodeYSpacing;
 		PrevNode = ThisNode;
 	}
 }
-#pragma optimize("", on)
 
 void UBrowseGraph::RemoveAllNodes()
 {

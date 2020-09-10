@@ -149,7 +149,7 @@ void UBrowseSchema::OpenNodeAsset(const UObject* Obj)
 {
 	if ((Obj != nullptr) && (Obj->IsAsset()))
 	{
-		FAssetEditorManager::Get().OpenEditorForAsset(const_cast<UObject*>(Obj));
+		GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(const_cast<UObject*>(Obj));
 	}
 	return;
 }
