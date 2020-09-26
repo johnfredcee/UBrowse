@@ -1,7 +1,7 @@
 // Some copyright should be here...
 #pragma once
 
-#include "SlateBasics.h"
+#include "Styling/SlateStyleRegistry.h"
 
 /**  */
 class FUBrowseStyle

@@ -227,10 +227,10 @@ void SUBrowseNode::PerformSecondPassLayout(const TMap< UObject*, TSharedRef<SNod
 	if (!TransNode->IsFixedInPlace())
 		return;
 	const float NodeGap{50.0f};
-	bool bStartedLeftHandLayout = false;
-	float LeftHandSide;
+	bool bStartedLeftHandLayout{ false };
+	float LeftHandSide{ 0.0f };
 	bool bStartedRightHandLayout = false;
-	float RightHandSide;
+	float RightHandSide{ 0.0f };
 
 	const TArray<UEdGraphPin*>& Pins{TransNode->GetAllPins()};
 

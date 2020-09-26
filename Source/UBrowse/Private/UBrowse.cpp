@@ -2,8 +2,6 @@
 
 #include "UBrowse.h"
 #include "UBrowsePrivatePCH.h"
-#include "SlateBasics.h"
-#include "SlateExtras.h"
 #include "LevelEditor.h"
 #include "IContentBrowserSingleton.h"
 #include "ContentBrowserModule.h"
