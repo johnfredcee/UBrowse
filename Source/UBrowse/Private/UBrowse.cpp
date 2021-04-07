@@ -107,21 +107,21 @@ void FUBrowseModule::ShutdownModule()
 
 TSharedRef<SDockTab> FUBrowseModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	const TSharedRef<SDockTab>  DockTab = SNew(SDockTab).TabRole(ETabRole::MajorTab);
+	const TSharedPtr<SDockTab>  DockTab = SNew(SDockTab).TabRole(ETabRole::MajorTab);
 	TSharedRef<SUBrowser> Browser = SNew(SUBrowser);
 	DockTab->SetContent(Browser);
 	Browser->RefreshList();
-	return DockTab;
+	return DockTab.ToSharedRef();
 }
 
 void FUBrowseModule::OpenUBrowser()
 {
-	FGlobalTabmanager::Get()->InvokeTab(UBrowseTabName);
+	FGlobalTabmanager::Get()->TryInvokeTab(UBrowseTabName);
 }
 
 void FUBrowseModule::ViewInUBrowse(const TArray<FAssetData>& SelectedAssets)
 {
-	TSharedRef<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->InvokeTab(UBrowseTabName);
+	TSharedPtr<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->TryInvokeTab(UBrowseTabName);
 	if (SelectedAssets.Num() >= 1)
 	{
 		TSharedRef<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());

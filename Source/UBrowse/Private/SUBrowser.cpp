@@ -539,9 +539,9 @@ void SUBrowser::OnNodeDoubleClicked(class UEdGraphNode* Node)
 	if (Node != nullptr) {
 		TArray< TWeakObjectPtr<UObject> > Selection;
 		const UObject* NodeObject = Cast<UBrowseNode>(Node)->GetUObject();
-		Selection.Add(NodeObject);
+		Selection.Add(MakeWeakObjectPtr(const_cast<UObject*>(NodeObject)));
 		PropertyView->SetObjects(Selection);
-		AddObjectToHistory(TSharedPtr<FBrowserObject>(new FBrowserObject(NodeObject)));
+		AddObjectToHistory(TSharedPtr<FBrowserObject>(new FBrowserObject(MakeWeakObjectPtr(const_cast<UObject*>(NodeObject)))));
 	}
 }
 
@@ -593,7 +593,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 		}
 
 
-		void BuildArrayRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context, UArrayProperty* ArrayProperty)
+		void BuildArrayRow(const FString& NameTooltipText, const FString& NameText, const FString& ValueText, const FString& TooltipText, UObject* Context, FArrayProperty* ArrayProperty)
 		{
 			IDetailGroup& NewGroup = Group.AddGroup(ArrayProperty->GetFName(), ArrayProperty->GetDisplayNameText());
 			IDetailGroup& OldGroup = Group;
@@ -602,8 +602,8 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 			FScriptArrayHelper ArrayHelper(ArrayProperty, ArrayPropInstAddress);
 			FString ArrayValueText = FString::Printf(TEXT("%d Elements"), ArrayHelper.Num());
 			BuildSimpleRow(NameTooltipText, NameText, ArrayValueText, TooltipText);
-			UProperty* ArrayValueProperty = ArrayProperty->Inner;
-			UObjectProperty* ObjectArrayValueProperty = Cast<UObjectProperty>(ArrayProperty->Inner);
+			FProperty* ArrayValueProperty = ArrayProperty->Inner;
+			FObjectProperty* ObjectArrayValueProperty = CastField<FObjectProperty>(ArrayProperty->Inner);
 			UClass* ElementClass = nullptr;
 			if (ObjectArrayValueProperty != nullptr)
 			{
@@ -638,8 +638,8 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 		{
 			auto FindUBrowserWidget = []()
 			{				
-				TSharedRef<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->InvokeTab(FUBrowseModule::UBrowseTabName);
-				TSharedRef<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());
+				TSharedPtr<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->TryInvokeTab(FUBrowseModule::UBrowseTabName);
+				TSharedPtr<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());
 				return UBrowserWidget;
 			};
 
@@ -935,9 +935,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 		// Enumerate the object fields
 		IDetailGroup& FieldGroup = ObjectCategory.AddGroup("UFields", LOCTEXT("UObjectFields", "Object Fields"), true, true);
 		TSharedPtr<UBrowseRowBuilder>  ClassBuilder = MakeShareable( new UBrowseRowBuilder (View, Layout, ObjectCategory, FieldGroup));
-		for (TFieldIterator<UProperty> PropIt(Class); PropIt; ++PropIt)
+		for (TFieldIterator<FProperty> PropIt(Class); PropIt; ++PropIt)
 		{
-			UProperty* Property = *PropIt;
+			FProperty* Property = *PropIt;
 			auto CPPName = Property->GetNameCPP();
 			auto CPPType = Property->GetCPPType();
 			auto PropertyName = Property->GetName();
@@ -948,9 +948,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 				FString CPPValue, UnrealValue;
 				Property->ExportText_Direct(CPPValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
 				Property->ExportText_Direct(UnrealValue, SourceAddr, SourceAddr, nullptr, PPF_BlueprintDebugView);
-				UObjectProperty* ObjectProperty = Cast<UObjectProperty>(Property);
-				UStructProperty* StructProperty = Cast<UStructProperty>(Property);
-				UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property);
+				FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
+				FStructProperty* StructProperty = CastField<FStructProperty>(Property);
+				FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property);
 				if (ObjectProperty != nullptr) 
 				{
 					UObject* PropertyObject = ObjectProperty->GetObjectPropertyValue(SourceAddr);
@@ -1054,8 +1054,8 @@ TSharedRef<ITableRow> SUBrowser::OnGenerateHistoryRow(TSharedPtr<FBrowserObject>
 void SUBrowser::OnHistorySelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type /*SelectInfo*/)
 {
 	TArray< TWeakObjectPtr<UObject> > Selection;
-	const UObject* HistoryObject = InItem->Object.Get();
-	Selection.Add(HistoryObject);
+	UObject* HistoryObject = InItem->Object.Get();
+	Selection.Add(MakeWeakObjectPtr(HistoryObject));
 	PropertyView->SetObjects(Selection);
 	OnNewObjectView.Execute(InItem);
 }

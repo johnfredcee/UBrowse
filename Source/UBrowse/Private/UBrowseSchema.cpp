@@ -7,6 +7,7 @@ SoundCueGraphSchema.cpp
 #include "UBrowseSchema.h"
 #include "UBrowsePrivatePCH.h"
 #include "Editor/UnrealEd/Public/Toolkits/AssetEditorManager.h"
+#include "ToolMenu.h"
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditorActions.h"
 #include "GraphEditor.h"

@@ -6,11 +6,10 @@ public class UBrowse : ModuleRules
 {
 	public UBrowse(ReadOnlyTargetRules Target) : base(Target)
 	{
+		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"UBrowse/Public"
-				
 				// ... add public include paths required here ...
 			}
 			);
@@ -18,7 +17,6 @@ public class UBrowse : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				"UBrowse/Private",
 				
 				// ... add other private include paths required here ...
 			}
@@ -43,14 +41,14 @@ public class UBrowse : ModuleRules
 				"InputCore",
 				"UnrealEd",
 				"LevelEditor",
-				"ToolMenus",
                 "ClassViewer",
                 "GraphEditor",
                 "PropertyEditor",
 				"CoreUObject", 
                 "Engine", 
                 "Slate", 
-                "SlateCore",		
+                "SlateCore",	
+				"ToolMenus"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
