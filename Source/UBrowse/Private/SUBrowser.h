@@ -1,4 +1,15 @@
+
 #pragma once
+
+#include "IDetailsView.h"
+#include "DetailsViewArgs.h"
+#include "Widgets/SWidget.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/Views/SHeaderRow.h"
+#include "Widgets/Views/SListView.h"
+#include "UBrowse.h"
+#include "SUBrowsePanel.h"
 
 
 class IDetailsView;

@@ -1,6 +1,5 @@
 // Some copyright should be here...
 #include "UBrowseStyle.h"
-#include "UBrowsePrivatePCH.h"
 #include "Slate/SlateGameResources.h"
 #include "Interfaces/IPluginManager.h"
 

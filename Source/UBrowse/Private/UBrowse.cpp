@@ -1,7 +1,6 @@
 // Some copyright should be here...
 
 #include "UBrowse.h"
-#include "UBrowsePrivatePCH.h"
 #include "LevelEditor.h"
 #include "IContentBrowserSingleton.h"
 #include "ContentBrowserModule.h"

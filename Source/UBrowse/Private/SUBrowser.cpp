@@ -1,5 +1,4 @@
 #include "SUBrowser.h"
-#include "UBrowsePrivatePCH.h"
 
 #include "SourceCodeNavigation.h"
 
@@ -8,7 +7,6 @@
 
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Framework/Docking/TabManager.h"
-#include "IDetailsView.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
 #include "PropertyHandle.h"
@@ -37,7 +35,6 @@
 #include "SUBrowserTableRow.h"
 #include "SUBrowsePropertyTableRow.h"
 #include "SUBrowserClassItem.h"
-#include "SUBrowsePanel.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowserMenu"
 
@@ -51,29 +48,29 @@ void SUBrowser::Construct(const FArguments& InArgs)
 	bIncludeTransient = false;
 	bOnlyListGCObjects = false;
 
-	Tag = FName(TEXT("UBrowseTag"));
+	SWidget::SetTag(FName(TEXT("UBrowseTag")));
 	SortBy = EQuerySortMode::ByID;
 	SortDirection = EColumnSortMode::Descending;
 	FilterClass = UBlueprint::StaticClass();
 
 	// Create a property view
 	FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	FDetailsViewArgs DetailsViewArgs(
-		/*bUpdateFromSelection=*/ false,
-		/*bLockable=*/ false,
-		/*bAllowSearch=*/ true,
-		FDetailsViewArgs::ObjectsUseNameArea,
-		/*bHideSelectionTip=*/ true,
-		/*InNotifyHook=*/ nullptr,
-		/*InSearchInitialKeyFocus=*/ false,
-		/*InViewIdentifier=*/ FName(TEXT("UBrowse")));
-	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Automatic;
+	FDetailsViewArgs DetailViewArgs;
+	DetailViewArgs.bUpdatesFromSelection = true;
+	DetailViewArgs.bLockable = false;
+	DetailViewArgs.bAllowSearch = true;
+	DetailViewArgs.NameAreaSettings = FDetailsViewArgs::ENameAreaSettings::ObjectsUseNameArea;
+	DetailViewArgs.bHideSelectionTip = true;
+	DetailViewArgs.NotifyHook = nullptr;
+	DetailViewArgs.bSearchInitialKeyFocus = false;
+	DetailViewArgs.ViewIdentifier = FName("UBrowse");
+	DetailViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Automatic;
 	TSharedPtr<FUBrowserPanel> FirstBrowserPanel(new FUBrowserPanel);
 	TSharedPtr<SUBrowsePanel> FirstSUBrowsePanel = SNew(SUBrowsePanel).OnNodeDoubleClicked(this, &SUBrowser::OnNodeDoubleClicked);
 	FirstBrowserPanel->BrowsePanel = FirstSUBrowsePanel;
 	BrowserPanels.Add(FirstBrowserPanel);
 	OnNewObjectView = FirstSUBrowsePanel->OnNewObjectView;
-	PropertyView = EditModule.CreateDetailView(DetailsViewArgs);
+	PropertyView = EditModule.CreateDetailView(DetailViewArgs);
 	FOnGetDetailCustomizationInstance UBrowseLiteralDetails = FOnGetDetailCustomizationInstance::CreateStatic(&FBrowserObject::MakeInstance);
 	PropertyView->RegisterInstancedCustomPropertyLayout(UObject::StaticClass(), UBrowseLiteralDetails);
 	ChildSlot

@@ -80,7 +80,7 @@ private:
 	FText OnCalcCount() const
 	{
 		uint32_t InstanceCount = 0;
-		for (FObjectIterator Itr; Itr; ++Itr) {
+		for (FThreadSafeObjectIterator Itr; Itr; ++Itr) {
 			if (Itr->IsA(Cast<UClass>(ClassToView.Get())))
 				InstanceCount++;
 		}

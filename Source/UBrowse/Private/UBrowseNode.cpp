@@ -1,7 +1,7 @@
 
 #include "UBrowseNode.h"
 #include "UBrowseGraph.h"
-#include "UBrowsePrivatePCH.h"
+#include "UObject/ObjectMacros.h"
 
 namespace {
 	FString GetFlagsAsText(EObjectFlags Param)
@@ -38,6 +38,9 @@ namespace {
 		if (Param & RF_TagGarbageTemp) {
 			Result.Append(TEXT("|Tageed Garbage"));
 		}
+		if (Param & RF_NeedInitialization) {
+			Result.Append(TEXT("|Needs Initialization"));
+		}
 		if (Param & RF_NeedLoad) {
 			Result.Append(TEXT("|Needs Loading"));
 		}
@@ -45,6 +48,9 @@ namespace {
 			Result.Append(TEXT("|Needs Post Loading"));
 		}
 		if (Param & RF_NeedPostLoadSubobjects) {
+			Result.Append(TEXT("|Subobjects need Post Loading"));
+		}
+		if (Param & RF_NewerVersionExists) {
 			Result.Append(TEXT("|Subobjects need Post Loading"));
 		}
 		if (Param & RF_BeginDestroyed) {
@@ -74,8 +80,17 @@ namespace {
 		if (Param &	RF_StrongRefOnFrame) {
 			Result.Append(TEXT("|Strong Ref on Function Frame"));
 		}
+		if (Param &	RF_NonPIEDuplicateTransient) {
+			Result.Append(TEXT("|Non PIE Duplicate Transient"));
+		}
 		if (Param & RF_Dynamic) {
 			Result.Append(TEXT("|Dynamic"));
+		}
+		if (Param & RF_WillBeLoaded) {
+			Result.Append(TEXT("|Will Be Loaded"));
+		}
+		if (Param & RF_HasExternalPackage) {
+			Result.Append(TEXT("|Has External Package"));
 		}
 		Result.Append("|");
 		return Result;

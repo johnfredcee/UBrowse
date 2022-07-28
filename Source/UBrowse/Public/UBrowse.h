@@ -26,7 +26,7 @@
 #include "IDetailCustomization.h"
 #include "IDetailsView.h"
 #include "IDetailRootObjectCustomization.h"
-
+#include "Widgets/Docking/SDockTab.h"
 
 class FBrowserObject : public IDetailCustomization
 {

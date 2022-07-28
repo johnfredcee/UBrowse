@@ -1,6 +1,7 @@
 #pragma once
 
 
+#include "UBrowse.h"
 #include "GraphEditor.h"
 
 class UBrowseGraph;

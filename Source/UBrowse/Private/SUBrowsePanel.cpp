@@ -1,6 +1,5 @@
 
 #include "SUBrowsePanel.h"
-#include "UBrowsePrivatePCH.h"
 #include "UBrowseGraph.h"
 #include "UBrowseSchema.h"
 

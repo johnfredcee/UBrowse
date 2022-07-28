@@ -1,10 +1,15 @@
 
 #include "SUBrowseNode.h"
-#include "UBrowsePrivatePCH.h"
+#include "Engine/Blueprint.h"
 #include "GraphEditorSettings.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EditorClassUtils.h"
+#include "SlateOptMacros.h"
 #include "UBrowseNode.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Layout/SSpacer.h"
+#include "Widgets/Layout/SBox.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowseNode" 
 
