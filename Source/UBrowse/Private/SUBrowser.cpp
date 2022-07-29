@@ -1,6 +1,5 @@
 
-#include "SourceCodeNavigation.h"
-
+#include "SUBrowser.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Framework/Docking/TabManager.h"
 #include "PropertyEditorDelegates.h"
@@ -23,7 +22,7 @@
 #include "IDetailPropertyRow.h"
 #include "DetailCategoryBuilder.h"
 #include "PropertyCustomizationHelpers.h"
-
+#include "SourceCodeNavigation.h"
 #include "ClassViewerModule.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "PropertyEditorModule.h"
@@ -31,7 +30,6 @@
 #include "UBrowseStyle.h"
 #include "UBrowseCommands.h"
 #include "UBrowseNode.h"
-#include "SUBrowser.h"
 #include "SUBrowserTableRow.h"
 #include "SUBrowsePropertyTableRow.h"
 #include "SUBrowserClassItem.h"

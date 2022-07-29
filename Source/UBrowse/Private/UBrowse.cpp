@@ -6,6 +6,7 @@
 #include "LevelEditorMenuContext.h"
 #include "IContentBrowserSingleton.h"
 #include "ContentBrowserModule.h"
+#include "Interfaces/IMainFrameModule.h"
 #include "Selection.h"
 #include "ToolMenus.h"
 #include "UBrowseStyle.h"
@@ -88,6 +89,20 @@ void FUBrowseModule::StartupModule()
 	CBAssetMenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateRaw(this, &FUBrowseModule::OnExtendContentBrowserAssetSelectionMenu));
 	ContentBrowserAssetExtenderDelegateHandle = CBAssetMenuExtenderDelegates.Last().GetHandle();
 
+	IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
+	if (MainFrameModule.IsWindowInitialized())
+	{
+		TSharedPtr<SWindow> DummyWindow;
+		FUBrowseModule::AddSceneOutlinerMenu(DummyWindow, false);
+	}
+	else
+	{
+		MainFrameModule.OnMainFrameCreationFinished().AddStatic(&AddSceneOutlinerMenu);
+	}
+}
+
+void FUBrowseModule::AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow)
+{
 	auto AddDynamicSection = [](UToolMenu* ToolMenu)
 	{				
 		if (ULevelEditorContextMenuContext* LevelEditorMenuContext = ToolMenu->Context.FindContext<ULevelEditorContextMenuContext>())
@@ -107,25 +122,17 @@ void FUBrowseModule::StartupModule()
 		}
 	};
 
-	if (UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorSceneOutliner.ContextMenu.UBrowseMenu"))
+	if (UToolMenu* ToolMenu = UToolMenus::Get()->FindMenu("LevelEditor.LevelEditorSceneOutliner.ContextMenu"))
 	{
-		ToolMenu->AddDynamicSection("LevelInstanceEditorModuleDynamicSection", FNewToolMenuDelegate::CreateLambda(AddDynamicSection));
+		ToolMenu->AddDynamicSection("UBrowseModuleDynamicSection", FNewToolMenuDelegate::CreateLambda(AddDynamicSection));
 	}
 
-	// // Register world details hool
-	// FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
-	// TArray<FLevelEditorModuleM
 }
 
 void FUBrowseModule::CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor)
 {
-		const FName UBrowseSectionName = TEXT("Level");
-		FToolMenuSection* SectionPtr = ToolMenu->FindSection(UBrowseSectionName);
-		if (!SectionPtr)
-		{
-			SectionPtr = &(ToolMenu->AddSection(UBrowseSectionName, LOCTEXT("UBrowseSectionLabel", "UBrowse")));
-		}
-		FToolMenuSection& Section = *SectionPtr;
+		const FName UBrowseSectionName = TEXT("UBrowse");
+		FToolMenuSection& Section = ToolMenu->AddSection(UBrowseSectionName, LOCTEXT("UBrowseSectionLabel", "UBrowse"));
 		FToolUIAction UBrowseOpenAction;
 		UBrowseOpenAction.ExecuteAction.BindLambda([](const FToolMenuContext&){});
 		Section.AddMenuEntry(
@@ -219,6 +226,11 @@ void FUBrowseModule::CreateAssetContextMenu(FMenuBuilder& MenuBuilder)
 	MenuBuilder.AddMenuEntry(FUBrowseCommands::Get().BrowseUObject);
 }
 
+
+bool FUBrowseModule::IsGameModule() const
+{
+	return false;
+}
 
 
 #undef LOCTEXT_NAMESPACE

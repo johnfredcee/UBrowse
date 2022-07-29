@@ -1,9 +1,9 @@
 
+#include "UBrowseGraph.h"
 #include "UObject/UObjectHash.h"
 #include "Engine/Blueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "UBrowse.h"
-#include "UBrowseGraph.h"
 #include "UBrowseNode.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraphUtilities.h"

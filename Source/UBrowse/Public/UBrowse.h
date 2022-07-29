@@ -60,7 +60,8 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	
+	virtual bool IsGameModule() const override;
+
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void OpenUBrowser();
 
@@ -72,6 +73,7 @@ public:
 	static const FName UBrowseTabName;
 
 private:
+	static void AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
 	static void CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor);
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);

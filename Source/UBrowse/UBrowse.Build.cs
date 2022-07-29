@@ -40,6 +40,7 @@ public class UBrowse : ModuleRules
 				"Projects",
 				"InputCore",
 				"UnrealEd",
+				"MainFrame",
 				"LevelEditor",
                 "ClassViewer",
                 "GraphEditor",
