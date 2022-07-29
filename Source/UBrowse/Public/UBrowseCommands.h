@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "Framework/Commands/Commands.h"
 #include "UBrowseStyle.h"
 
 class FUBrowseCommands : public TCommands<FUBrowseCommands>

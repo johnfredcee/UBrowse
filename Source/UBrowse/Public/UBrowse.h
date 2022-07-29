@@ -72,7 +72,7 @@ public:
 	static const FName UBrowseTabName;
 
 private:
-
+	static void CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor);
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
 

@@ -2,7 +2,12 @@
 
 #pragma once
 
+#include "UBrowse.h"
 #include "ClassIconFinder.h"
+#include "SlateOptMacros.h"
+#include "Widgets/Views/STableRow.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowserTableRow"
 

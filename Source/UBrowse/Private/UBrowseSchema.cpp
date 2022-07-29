@@ -5,7 +5,10 @@ SoundCueGraphSchema.cpp
 =============================================================================*/
 
 #include "UBrowseSchema.h"
+#include "Widgets/SCompoundWidget.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "ToolMenu.h"
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditorActions.h"
@@ -13,6 +16,7 @@ SoundCueGraphSchema.cpp
 #include "ConnectionDrawingPolicy.h"
 #include "UBrowseNode.h"
 #include "UBrowseEditorCommands.h"
+#include "SlateOptMacros.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseSchema"
 

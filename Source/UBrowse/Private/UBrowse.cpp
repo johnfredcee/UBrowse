@@ -1,14 +1,19 @@
 // Some copyright should be here...
 
 #include "UBrowse.h"
+#include "GameFramework/Actor.h"
 #include "LevelEditor.h"
+#include "LevelEditorMenuContext.h"
 #include "IContentBrowserSingleton.h"
 #include "ContentBrowserModule.h"
+#include "Selection.h"
+#include "ToolMenus.h"
 #include "UBrowseStyle.h"
 #include "UBrowseCommands.h"
 #include "UBrowseEditorCommands.h"
 #include "UBrowseNode.h"
 #include "SUBrowser.h"
+#include "SUBrowseNode.h"
 
 const FName FUBrowseModule::UBrowseTabName("UBrowse");
 
@@ -58,7 +63,7 @@ void FUBrowseModule::StartupModule()
 
 		{
 			TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
-			MenuExtender->AddMenuExtension("Miscellaneous", EExtensionHook::After, PluginCommands,
+			MenuExtender->AddMenuExtension("Instrumentation", EExtensionHook::Before, PluginCommands,
 				FMenuExtensionDelegate::CreateRaw(this, &FUBrowseModule::AddMenuExtension));
 
 			LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
@@ -83,6 +88,52 @@ void FUBrowseModule::StartupModule()
 	CBAssetMenuExtenderDelegates.Add(FContentBrowserMenuExtender_SelectedAssets::CreateRaw(this, &FUBrowseModule::OnExtendContentBrowserAssetSelectionMenu));
 	ContentBrowserAssetExtenderDelegateHandle = CBAssetMenuExtenderDelegates.Last().GetHandle();
 
+	auto AddDynamicSection = [](UToolMenu* ToolMenu)
+	{				
+		if (ULevelEditorContextMenuContext* LevelEditorMenuContext = ToolMenu->Context.FindContext<ULevelEditorContextMenuContext>())
+		{
+			// Use the actor under the cursor if available (e.g. right-click menu).
+			// Otherwise use the first selected actor if there's one (e.g. Actor pulldown menu or outliner).
+			AActor* ContextActor = LevelEditorMenuContext->HitProxyActor;
+			if (!ContextActor && GEditor->GetSelectedActorCount() != 0)
+			{
+				ContextActor = Cast<AActor>(GEditor->GetSelectedActors()->GetSelectedObject(0));
+			}
+
+			if (ContextActor)
+			{
+				FUBrowseModule::CreateBrowseMenu(ToolMenu, ContextActor);
+			}
+		}
+	};
+
+	if (UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorSceneOutliner.ContextMenu.UBrowseMenu"))
+	{
+		ToolMenu->AddDynamicSection("LevelInstanceEditorModuleDynamicSection", FNewToolMenuDelegate::CreateLambda(AddDynamicSection));
+	}
+
+	// // Register world details hool
+	// FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>(TEXT("LevelEditor"));
+	// TArray<FLevelEditorModuleM
+}
+
+void FUBrowseModule::CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor)
+{
+		const FName UBrowseSectionName = TEXT("Level");
+		FToolMenuSection* SectionPtr = ToolMenu->FindSection(UBrowseSectionName);
+		if (!SectionPtr)
+		{
+			SectionPtr = &(ToolMenu->AddSection(UBrowseSectionName, LOCTEXT("UBrowseSectionLabel", "UBrowse")));
+		}
+		FToolMenuSection& Section = *SectionPtr;
+		FToolUIAction UBrowseOpenAction;
+		UBrowseOpenAction.ExecuteAction.BindLambda([](const FToolMenuContext&){});
+		Section.AddMenuEntry(
+			FName("ActorUBrowse"),
+			LOCTEXT("UBrowseActor", "UBrowse"),
+			TAttribute<FText>(),
+			FSlateIcon(),
+			UBrowseOpenAction);
 }
 
 void FUBrowseModule::ShutdownModule()

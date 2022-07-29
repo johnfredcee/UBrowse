@@ -6,7 +6,8 @@ public class UBrowse : ModuleRules
 {
 	public UBrowse(ReadOnlyTargetRules Target) : base(Target)
 	{
-	
+		bUseUnity= false;
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
