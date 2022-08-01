@@ -99,6 +99,11 @@ private:
 
 	const TArray< TSharedPtr< FBrowserObject > >& GetCurrentHistoryList();
 
+	void OnLevelActorAdded(AActor* InActor);
+	void OnLevelActorDeleted(AActor* InActor);
+	void OnLevelActorListChanged();
+	void OnPostGarbageCollect();
+	
 	// Filters
 	FText FilterText;
 	FString FilterString;

@@ -1,5 +1,6 @@
 
 #include "SUBrowsePanel.h"
+#include "Widgets/Text/STextBlock.h"
 #include "UBrowseGraph.h"
 #include "UBrowseSchema.h"
 

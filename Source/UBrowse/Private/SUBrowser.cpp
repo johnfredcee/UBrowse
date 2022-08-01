@@ -1,38 +1,44 @@
 
+
 #include "SUBrowser.h"
+#include "LevelEditor.h"
+#include "HAL/FileManager.h"
+#include "UBrowse.h"
+#include "UObject/NameTypes.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/WeakObjectPtrTemplates.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SEditableTextBox.h"
 #include "Framework/Docking/TabManager.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "PropertyEditorDelegates.h"
 #include "PropertyEditorModule.h"
 #include "PropertyHandle.h"
-#include "DetailWidgetRow.h"
 #include "IDetailGroup.h"
 #include "IDetailCustomNodeBuilder.h"
 #include "IDetailPropertyRow.h"
-#include "DetailLayoutBuilder.h"
-#include "DetailCategoryBuilder.h"
 #include "IPropertyTypeCustomization.h"
 #include "IDetailChildrenBuilder.h"
 #include "IDetailCustomization.h"
 #include "IDetailsView.h"
 #include "IDetailRootObjectCustomization.h"
-#include "EditorFontGlyphs.h"
 #include "DetailLayoutBuilder.h"
-#include "IDetailChildrenBuilder.h"
-#include "IDetailPropertyRow.h"
+#include "DetailWidgetRow.h"
 #include "DetailCategoryBuilder.h"
+#include "EditorFontGlyphs.h"
 #include "PropertyCustomizationHelpers.h"
 #include "SourceCodeNavigation.h"
 #include "ClassViewerModule.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "PropertyEditorModule.h"
-#include "LevelEditor.h"
 #include "UBrowseStyle.h"
 #include "UBrowseCommands.h"
 #include "UBrowseNode.h"
 #include "SUBrowserTableRow.h"
 #include "SUBrowsePropertyTableRow.h"
 #include "SUBrowserClassItem.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowserMenu"
 
@@ -49,7 +55,8 @@ void SUBrowser::Construct(const FArguments& InArgs)
 	SWidget::SetTag(FName(TEXT("UBrowseTag")));
 	SortBy = EQuerySortMode::ByID;
 	SortDirection = EColumnSortMode::Descending;
-	FilterClass = UBlueprint::StaticClass();
+	FilterClass = UObject::StaticClass();
+
 
 	// Create a property view
 	FPropertyEditorModule& EditModule = FModuleManager::Get().GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -71,6 +78,13 @@ void SUBrowser::Construct(const FArguments& InArgs)
 	PropertyView = EditModule.CreateDetailView(DetailViewArgs);
 	FOnGetDetailCustomizationInstance UBrowseLiteralDetails = FOnGetDetailCustomizationInstance::CreateStatic(&FBrowserObject::MakeInstance);
 	PropertyView->RegisterInstancedCustomPropertyLayout(UObject::StaticClass(), UBrowseLiteralDetails);
+
+	// hook into changes
+	GEngine->OnLevelActorAdded().AddSP(this, &SUBrowser::OnLevelActorAdded);
+	GEngine->OnLevelActorDeleted().AddSP(this, &SUBrowser::OnLevelActorDeleted);
+	GEngine->OnLevelActorListChanged().AddSP(this, &SUBrowser::OnLevelActorListChanged);
+	FCoreUObjectDelegates::GetPostGarbageCollect().AddSP(this, &SUBrowser::OnPostGarbageCollect);
+
 	ChildSlot
 	[
 		SNew(SSplitter)
@@ -92,6 +106,12 @@ void SUBrowser::Construct(const FArguments& InArgs)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
 					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("ClassName", "Class Filter"))
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
 						SNew(SButton)
 						.OnClicked(this, &SUBrowser::OnClassSelectionClicked)
 						[
@@ -101,7 +121,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 						]
 					]
 					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
+					.FillWidth(0.8f)
 					[
 						SNew(SEditableTextBox)
 						.HintText(LOCTEXT("ObjectName", "Object Name Filter"))
@@ -274,9 +294,9 @@ void SUBrowser::AddBoolFilter(FMenuBuilder& MenuBuilder, FText Text, FText MenuT
 		MenuToolTip,
 		FSlateIcon(),
 		FUIAction(
-			FExecuteAction::CreateLambda([=] { *BoolOption = !(*BoolOption); RefreshList(); }),
+			FExecuteAction::CreateLambda([this,BoolOption] { *BoolOption = !(*BoolOption); RefreshList(); }),
 			FCanExecuteAction(),
-			FIsActionChecked::CreateLambda([=] { return *BoolOption; })
+			FIsActionChecked::CreateLambda([BoolOption] { return *BoolOption; })
 		),
 		NAME_None,
 		EUserInterfaceActionType::ToggleButton
@@ -407,8 +427,7 @@ void SUBrowser::RefreshList()
 			continue;
 		}
 
-		TSharedPtr<FBrowserObject> NewObject = MakeShareable(new FBrowserObject());
-		NewObject->Object = *It;
+		TSharedPtr<FBrowserObject> NewObject = MakeShareable(new FBrowserObject(*It));
 
 		Panel.LiveObjects.Add(NewObject);
 	}
@@ -469,11 +488,16 @@ void SUBrowser::ViewUObject(UObject* InObjectToView)
 	{
 		return;
 	}
-	// set filters to include everything
-	bShouldIncludeDefaultSubObjects = true;
-	bShouldIncludeArchetypeObjects = true;
-	bShouldIncludeClassDefaultObjects = true;
-	FilterClass = UObject::StaticClass();
+	UClass* ObjClass = Cast<UClass>(InObjectToView);
+	if (ObjClass == nullptr)
+	{
+		ObjClass = InObjectToView->GetClass();
+	}
+	if (ObjClass == nullptr)
+	{
+		ObjClass = UObject::StaticClass();
+	}
+	FilterClass = ObjClass;
 
 	TArray<TWeakObjectPtr<UObject> > Selection;
 	Selection.Add(InObjectToView);
@@ -481,6 +505,7 @@ void SUBrowser::ViewUObject(UObject* InObjectToView)
 	auto BrowserObject =  MakeShared<FBrowserObject>(WeakPtr);
 	AddObjectToHistory(BrowserObject);
 	PropertyView->SetObjects(Selection);
+	RefreshList();
 	OnNewObjectView.Execute(BrowserObject);
 
 }
@@ -777,16 +802,23 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 
 	struct BoolString
 	{
+
 		BoolString() {
 		}
 
 		const FString operator()(bool value, const FString& property)
 		{
-			return value ? "Is " + property : "Is Not " + property;
+			static FString TrueString{(TEXT("Is "))};
+			static FString FalseString{(TEXT("Is Not "))};
+
+			return value ? TrueString + property : FalseString + property;
 		}
 		const FString& operator()(bool value)
 		{
-			return value ? TEXT("True") : TEXT("False");
+			static FString TrueString{(TEXT("True"))};
+			static FString FalseString{(TEXT("False"))};
+
+			return value ? TrueString : FalseString;
 		}
 	};
 
@@ -1064,4 +1096,41 @@ void SUBrowser::PopulateHistoryList()
 }
 
 
+void SUBrowser::OnLevelActorAdded(AActor* InActor)
+{
+	RefreshList();
+}
+	
+void SUBrowser::OnLevelActorDeleted(AActor* InActor)
+{
+	TArray<TWeakObjectPtr<UObject>> Selection = PropertyView->GetSelectedObjects();
+	if (Selection.Num() > 0) 
+	{
+		TWeakObjectPtr<UObject> ViewingObj = Selection[0];
+		if (ViewingObj.IsValid())
+		{
+			AActor* PossibleActor = Cast<AActor>(ViewingObj);
+			if (PossibleActor == InActor)
+			{
+				ViewUObject(PossibleActor->GetClass());
+			}
+		}
+	}
+	RefreshList();
+}
+
+void SUBrowser::OnLevelActorListChanged()
+{
+	RefreshList();
+}
+
+void SUBrowser::OnPostGarbageCollect()
+{
+	PropertyView->RemoveInvalidObjects();
+	if (PropertyView->GetSelectedObjects().Num() == 0)
+	{
+		ViewUObject(UObject::StaticClass());
+	}
+	RefreshList();
+}
 #undef LOCTEXT_NAMESPACE

@@ -68,16 +68,18 @@ public:
 	FDelegateHandle ContentBrowserAssetExtenderDelegateHandle;
 	TSharedRef<FExtender> OnExtendContentBrowserAssetSelectionMenu(const TArray<FAssetData>& SelectedAssets);
 	void CreateAssetContextMenu(FMenuBuilder& MenuBuilder);
-	void ViewInUBrowse(const TArray<FAssetData>& SelectedAssets);
 
 	static const FName UBrowseTabName;
+	void ViewInUBrowse(UObject* ObjectToView);
+
+protected:	
+	void ViewInUBrowse(const TArray<FAssetData>& SelectedAssets);
 
 private:
-	static void AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
-	static void CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor);
+	void AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
+	void CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor);
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
-
 	TSharedRef<SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 	TSharedPtr<FGraphPanelNodeFactory> m_NodeFactory;
 	TSharedPtr<class FUICommandList> PluginCommands;

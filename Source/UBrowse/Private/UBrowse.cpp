@@ -93,17 +93,18 @@ void FUBrowseModule::StartupModule()
 	if (MainFrameModule.IsWindowInitialized())
 	{
 		TSharedPtr<SWindow> DummyWindow;
-		FUBrowseModule::AddSceneOutlinerMenu(DummyWindow, false);
+		AddSceneOutlinerMenu(DummyWindow, false);
 	}
 	else
 	{
-		MainFrameModule.OnMainFrameCreationFinished().AddStatic(&AddSceneOutlinerMenu);
+		MainFrameModule.OnMainFrameCreationFinished().AddRaw(this, &FUBrowseModule::AddSceneOutlinerMenu);
 	}
+
 }
 
 void FUBrowseModule::AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow)
 {
-	auto AddDynamicSection = [](UToolMenu* ToolMenu)
+	auto AddDynamicSection = [this](UToolMenu* ToolMenu)
 	{				
 		if (ULevelEditorContextMenuContext* LevelEditorMenuContext = ToolMenu->Context.FindContext<ULevelEditorContextMenuContext>())
 		{
@@ -117,7 +118,7 @@ void FUBrowseModule::AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool
 
 			if (ContextActor)
 			{
-				FUBrowseModule::CreateBrowseMenu(ToolMenu, ContextActor);
+				this->CreateBrowseMenu(ToolMenu, ContextActor);
 			}
 		}
 	};
@@ -134,12 +135,12 @@ void FUBrowseModule::CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor)
 		const FName UBrowseSectionName = TEXT("UBrowse");
 		FToolMenuSection& Section = ToolMenu->AddSection(UBrowseSectionName, LOCTEXT("UBrowseSectionLabel", "UBrowse"));
 		FToolUIAction UBrowseOpenAction;
-		UBrowseOpenAction.ExecuteAction.BindLambda([](const FToolMenuContext&){});
+		UBrowseOpenAction.ExecuteAction.BindLambda([this, ContextActor](const FToolMenuContext&){ this->ViewInUBrowse(ContextActor); });
 		Section.AddMenuEntry(
 			FName("ActorUBrowse"),
 			LOCTEXT("UBrowseActor", "UBrowse"),
-			TAttribute<FText>(),
-			FSlateIcon(),
+			TAttribute<FText>(FText::FromString("UObject Browser")),
+			FSlateIcon(FUBrowseStyle::GetStyleSetName(), "UBrowse.ActionGo"), // TO DO -- need an icon
 			UBrowseOpenAction);
 }
 
@@ -147,6 +148,8 @@ void FUBrowseModule::ShutdownModule()
 {
 	if (!IsRunningCommandlet())
 	{
+		IMainFrameModule& MainFrameModule = IMainFrameModule::Get();
+		MainFrameModule.OnMainFrameCreationFinished().RemoveAll(this);
 		FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>(TEXT("ContentBrowser"));	
 		TArray<FContentBrowserMenuExtender_SelectedAssets>& CBAssetMenuExtenderDelegates = ContentBrowserModule.GetAllAssetViewContextMenuExtenders();
 		CBAssetMenuExtenderDelegates.RemoveAll([this](const FContentBrowserMenuExtender_SelectedAssets& Delegate) { return Delegate.GetHandle() == ContentBrowserAssetExtenderDelegateHandle; });
@@ -189,6 +192,13 @@ void FUBrowseModule::ViewInUBrowse(const TArray<FAssetData>& SelectedAssets)
 
 }
 
+void FUBrowseModule::ViewInUBrowse(UObject* ObjectToView)
+{
+	TSharedPtr<SDockTab> UBrowseTab = FGlobalTabmanager::Get()->TryInvokeTab(UBrowseTabName);
+	TSharedRef<SUBrowser> UBrowserWidget = StaticCastSharedRef<SUBrowser>(UBrowseTab->GetContent());
+	UBrowserWidget->ViewUObject(ObjectToView);
+}
+
 
 void FUBrowseModule::AddMenuExtension(FMenuBuilder& Builder)
 {
@@ -213,7 +223,7 @@ TSharedRef<FExtender> FUBrowseModule::OnExtendContentBrowserAssetSelectionMenu(c
 			MenuBuilder.AddMenuEntry(
 				NSLOCTEXT("UBrowse", "ShowInUBrowse_MenuLabel", "Show In UBrowse"),
 				NSLOCTEXT("UBrowse", "ShowInUBrowse_Tooltip", "Open UObject in UBrowse Window"),
-				FSlateIcon(),
+				FSlateIcon(FUBrowseStyle::GetStyleSetName(), "UBrowse.ActionGo"), // TODO : Need Icon
 				FUIAction(FExecuteAction::CreateLambda([this, SelectedAssets](){ this->ViewInUBrowse(SelectedAssets); }))
 			);
 		}));

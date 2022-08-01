@@ -1,10 +1,10 @@
-// Copyright 1998-2016 Epic Games, Inc. All Rights Reserved.
+// 
 
-/*=============================================================================
-SoundCueGraphSchema.cpp
-=============================================================================*/
 
 #include "UBrowseSchema.h"
+#include "UBrowse.h"
+#include "UBrowseGraph.h"
+#include "Editor.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBox.h"
@@ -13,6 +13,7 @@ SoundCueGraphSchema.cpp
 #include "EdGraph/EdGraphNode.h"
 #include "GraphEditorActions.h"
 #include "GraphEditor.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "ConnectionDrawingPolicy.h"
 #include "UBrowseNode.h"
 #include "UBrowseEditorCommands.h"
@@ -131,15 +132,28 @@ void UBrowseSchema::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenu
 	Super::GetContextMenuActions(Menu, Context);
 
 	const UBrowseNode* Node = Cast<UBrowseNode>(Context->Node);
-	if ((Node != nullptr) && (Node->GetUObject() != nullptr) && (Node->GetUObject()->IsAsset()))
+	if ((Node != nullptr) && (Node->GetUObject() != nullptr)) 
 	{
 		FToolMenuSection& Section = Menu->AddSection("UBrowseGraphSchemaNodeActions", LOCTEXT("UBrowseActionsMenuHeader", "UBrowse Node Actions"));
-		Section.AddMenuEntry(
-			"MarkDependentCompilableAssetsDirty",
-			LOCTEXT("MarkDependentCompilableAssetsDirtyLabel", "Mark dependent compilable assets dirty"),
-			LOCTEXT("MarkDependentCompilableAssetsDirtyToolTip", "Finds all niagara assets which depend on this asset either directly or indirectly,\n and marks them dirty so they can be saved with the latest version."),
-			FSlateIcon(),
-			FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));		
+		if (Node->GetUObject()->GetClass() != nullptr)
+		{
+			Section.AddMenuEntry(
+				"UBrowseEditAsset",
+				LOCTEXT("UBrowseBrowseClassLabel", "Browse UClass"),
+				LOCTEXT("UBrowseBrowseClassToolTip", "Browse the class object of this object."),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::BrowseClass, Node->GetUObject()->GetClass())));		
+		}
+		if (Node->GetUObject()->IsAsset())
+		{
+
+			Section.AddMenuEntry(
+				"UBrowseEditAsset",
+				LOCTEXT("UBrowseEditAssetLabel", "Edit Asset"),
+				LOCTEXT("UBrowseEditAssetToolTip", "Opens asset Editor for this Asset"),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateStatic(&UBrowseSchema::OpenNodeAsset, Node->GetUObject())));		
+		}
 	}
 };
 
@@ -156,4 +170,39 @@ void UBrowseSchema::OpenNodeAsset(const UObject* Obj)
 	}
 	return;
 }
+
+void UBrowseSchema::BrowseClass(UClass* ClassObj)
+{
+	FUBrowseModule& UBrowseModule = FModuleManager::LoadModuleChecked<FUBrowseModule>("UBrowse");
+	if (ClassObj != nullptr)
+	{
+		UBrowseModule.ViewInUBrowse(ClassObj);	
+	}
+	return;
+}
+
+void UBrowseSchema::BrowseInstances(UObject* Obj)
+{
+	UClass* ClassObj = Obj->GetClass();
+	// TO DO 
+	return;
+}
+
+// void UBrowseSchema::GetGraphDisplayInformation(const UEdGraph& Graph, /*out*/ FGraphDisplayInfo& DisplayInfo) const
+// {
+// // 	UBrowseGraph
+// // 	DisplayInfo.PlainName = FText::FromString( Graph.GetName() );
+	
+// // 	if (const UAnimStateConduitNode* ConduitNode = Cast<const UAnimStateConduitNode>(Graph.GetOuter()))
+// // 	{
+// // 		FFormatNamedArguments Args;
+// // 		Args.Add(TEXT("NodeTitle"), ConduitNode->GetNodeTitle(ENodeTitleType::FullTitle) );
+
+// // 		DisplayInfo.PlainName = FText::Format( NSLOCTEXT("Animation", "ConduitRuleGraphTitle", "{NodeTitle} (conduit rule)"), Args);
+// // 	}
+
+// // 	DisplayInfo.DisplayName = DisplayInfo.PlainName;
+// // }
+
+
 #undef LOCTEXT_NAMESPACE

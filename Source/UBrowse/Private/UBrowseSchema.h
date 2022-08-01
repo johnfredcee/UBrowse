@@ -37,9 +37,10 @@ class UBrowseSchema : public UEdGraphSchema
 {
 	GENERATED_UCLASS_BODY()
 
-	// TO DO : Get Graph Display Info
 	//virtual void GetGraphDisplayInformation(const UEdGraph& Graph, /*out*/ FGraphDisplayInfo& DisplayInfo) const;
 	static void OpenNodeAsset(const UObject* Obj);
+	static void BrowseClass(UClass* ClassObj);
+	static void BrowseInstances(UObject* Obj);
 
 
 	//~ Begin EdGraphSchema Interface

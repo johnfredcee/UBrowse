@@ -44,7 +44,8 @@ TSharedRef< FSlateStyleSet > FUBrowseStyle::Create()
 	const FVector2D Icon20x20(20.0f, 20.0f);
 	const FVector2D Icon40x40(40.0f, 40.0f);
 
-	Style->Set("UBrowse.OpenPluginWindow", new IMAGE_BRUSH(TEXT("ButtonIcon_40x"), Icon40x40));
+	Style->Set("UBrowse.OpenPluginWindow", new IMAGE_BRUSH(TEXT("UBrowseEye_40x"), Icon40x40));
+	Style->Set("UBrowse.ActionGo", new IMAGE_BRUSH(TEXT("UBrowseGo_40x"), Icon40x40));
 
 
 	// We need some colors from Editor Style & this is the only way to do this at the moment
