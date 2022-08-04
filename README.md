@@ -12,4 +12,6 @@ It installs a menu item on the context menu and the world details menu as well a
 
 ![Screenshot](Docs/UBROWSE2.png)
 
+[There is a quick explanatory video here](https://www.youtube.com/watch?v=sM78rZ1116s)
+
 It is based in part on the Object Browser plugin by [Nick Darnell] (https://github.com/ue4plugins/ObjectBrowser)
