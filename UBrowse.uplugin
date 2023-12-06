@@ -6,10 +6,10 @@
 	"Description": "UObject Browser",
 	"Category": "Developer",
 	"CreatedBy": "John Connors",
-	"CreatedByURL": "",
+	"CreatedByURL": "https://github.com/johnfredcee",
 	"DocsURL": "",
 	"MarketplaceURL": "",
-	"SupportURL": "",
+	"SupportURL": "https://github.com/johnfredcee/UBrowse/issues",
 	"Type": "Editor",
 	"Modules": [
 		{
@@ -18,8 +18,8 @@
 			"LoadingPhase": "Default"
 		}
 	],
-	"EnabledByDefault": false,
+	"EnabledByDefault": true,
 	"CanContainContent": false,
 	"IsBetaVersion": false,
-	"Installed": true
+	"Installed": false
 }
