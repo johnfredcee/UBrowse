@@ -10,6 +10,7 @@
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Layout/SBox.h"
+#include "EditorStyleSet.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowseNode" 
 
