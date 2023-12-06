@@ -1,17 +1,20 @@
 # UBrowse
+Unreal Engine Plugin. Currently supports **Unreal Engine 5.3**
+##### For browsing a graph of the low/level package/object structure and `UPROPERTY` fields of live objects in the engine.
 
-Unreal Engine plugin for browsing a graph of the low/level package/object structure and UPROPERTY fields of live objects in the engine.
-
-It shows a great amount of detail about individual UObjects including the low level flags which is handy for debugging; it also lets you navigate among UOBJECTS and UCLASSES hypertext style. It's a wholly different view of the engine which is difficult to capture from a debugger. It shows a bit of structure among components : Owner / Owned relationships and among Blueprints (GeneratedClass / GeneratedBy).
-It's a useful tool for exploring the low level structure of the engine.
-
-It compiles against Unreal Engine 5.03.
-
-It installs a menu item on the context menu and the world details menu as well as the toolbar.
-
+### Features:
+#### Detailed `UObject` Information
+  - Reveals extensive details about individual `UObject`s, including low-level flags crucial for debugging.
+  - Highlights structure among components, showcasing relationships such as Owner/Owned relationships and connections among Blueprints (`GeneratedClass`/`GeneratedBy`).
+#### Useful Exploration Tool
+  - Serves as a valuable tool for exploring the low-level structure of the engine.
+  - Provides a unique and comprehensive view of the engine, offering insights which are challenging to capture through conventional debugging methods.
+  - Enables seamless navigation among `UObject`s and `UClass`es in a hypertext-style format.
+#### Easy to Access
+  - Available on the context menu, world details menu, and toolbar.
 
 ![Screenshot](Docs/UBROWSE2.png)
 
-[There is a quick explanatory video here](https://www.youtube.com/watch?v=sM78rZ1116s)
+[Quick explanatory video](https://www.youtube.com/watch?v=sM78rZ1116s)
 
-It is based in part on the Object Browser plugin by [Nick Darnell] (https://github.com/ue4plugins/ObjectBrowser)
+Based in part on the [Object Browser](https://github.com/ue4plugins/ObjectBrowser) plugin by [Nick Darnell](https://github.com/nickdarnell).
