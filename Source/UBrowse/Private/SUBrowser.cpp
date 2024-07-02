@@ -5,6 +5,7 @@
 #include "HAL/FileManager.h"
 #include "UBrowse.h"
 #include "UObject/NameTypes.h"
+#include "UObject/PropertyPortFlags.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
@@ -95,7 +96,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SVerticalBox)
 				/* Top bar of object viewer */
@@ -132,7 +133,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 					.AutoWidth()
 					[
 						SNew(SComboButton)
-						.ComboButtonStyle(FEditorStyle::Get(), "GenericFilters.ComboButtonStyle")
+						.ComboButtonStyle(FAppStyle::Get(), "GenericFilters.ComboButtonStyle")
 						.ForegroundColor(FLinearColor::White)
 						.ContentPadding(0)
 						.ToolTipText(LOCTEXT("AddFilterToolTip", "Add a search filter."))
@@ -146,8 +147,8 @@ void SUBrowser::Construct(const FArguments& InArgs)
 							.AutoWidth()
 							[
 								SNew(STextBlock)
-								.TextStyle(FEditorStyle::Get(), "GenericFilters.TextStyle")
-								.Font(FEditorStyle::Get().GetFontStyle("FontAwesome.9"))
+								.TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
+								.Font(FAppStyle::Get().GetFontStyle("FontAwesome.9"))
 								.Text(FEditorFontGlyphs::Filter)
 							]
 							+ SHorizontalBox::Slot()
@@ -155,7 +156,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 							.Padding(2, 0, 0, 0)
 							[
 								SNew(STextBlock)
-								.TextStyle(FEditorStyle::Get(), "GenericFilters.TextStyle")
+								.TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
 								.Text(LOCTEXT("Filters", "Filters"))
 							]
 						]
@@ -176,7 +177,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 				.FillHeight(1.0f)
 				[
 					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 					.Padding(FMargin(0.0f, 4.0f))
 					[
 						SAssignNew(ObjectListView, SListView< TSharedPtr<FBrowserObject> >)
@@ -223,7 +224,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 				.FillHeight(1.0f)
 				[
 					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 					.Padding(FMargin(0.0f, 4.0f))
 					[
 						SAssignNew(ObjectHistoryView, SListView< TSharedPtr< FBrowserObject > >)
@@ -252,7 +253,7 @@ void SUBrowser::Construct(const FArguments& InArgs)
 		[
 			SNew(SBorder)
 			.Padding(FMargin(3))
-			.BorderImage(FEditorStyle::GetBrush("ToolPanel.GroupBorder"))
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot()
@@ -973,7 +974,7 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 			if (SourceAddr != nullptr)
 			{
 				FString CPPValue, UnrealValue;
-				Property->ExportText_Direct(CPPValue, SourceAddr, SourceAddr, nullptr, PPF_ExportCpp);
+				Property->ExportText_Direct(CPPValue, SourceAddr, SourceAddr, nullptr, PPF_Copy | PPF_DebugDump);
 				Property->ExportText_Direct(UnrealValue, SourceAddr, SourceAddr, nullptr, PPF_BlueprintDebugView);
 				FObjectProperty* ObjectProperty = CastField<FObjectProperty>(Property);
 				FStructProperty* StructProperty = CastField<FStructProperty>(Property);

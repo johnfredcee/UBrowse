@@ -85,7 +85,7 @@ void SUBrowseNode::UpdateGraphNode()
 		.AutoHeight()
 		[
 			SNew(SBorder)
-			.BorderImage(FEditorStyle::GetBrush("Graph.Node.Body"))
+			.BorderImage(FAppStyle::GetBrush("Graph.Node.Body"))
 			.Padding(0)
 			[
 				SNew(SVerticalBox)
@@ -99,14 +99,14 @@ void SUBrowseNode::UpdateGraphNode()
 					+ SOverlay::Slot()
 					[
 						SNew(SImage)
-						.Image(FEditorStyle::GetBrush("Graph.Node.TitleGloss"))
+						.Image(FAppStyle::GetBrush("Graph.Node.TitleGloss"))
 					]
 					+ SOverlay::Slot()
 					.HAlign(HAlign_Left)
 					.VAlign(VAlign_Center)
 					[
 						SNew(SBorder)
-						.BorderImage(FEditorStyle::GetBrush("Graph.Node.ColorSpill"))
+						.BorderImage(FAppStyle::GetBrush("Graph.Node.ColorSpill"))
 						.Padding(FMargin(10, 5, 30, 3))
 						.BorderBackgroundColor(this, &SUBrowseNode::GetNodeTitleColor)
 						[
@@ -140,7 +140,7 @@ void SUBrowseNode::UpdateGraphNode()
 					.VAlign(VAlign_Top)
 					[
 						SNew(SBorder)
-						.BorderImage(FEditorStyle::GetBrush("Graph.Node.TitleHighlight"))
+						.BorderImage(FAppStyle::GetBrush("Graph.Node.TitleHighlight"))
 						.Visibility(EVisibility::HitTestInvisible)
 						[
 							SNew(SSpacer)
@@ -164,7 +164,7 @@ void SUBrowseNode::UpdateGraphNode()
 				[
 					// NODE CONTENT AREA
 					SNew(SBorder)
-					.BorderImage(FEditorStyle::GetBrush("NoBorder"))
+					.BorderImage(FAppStyle::GetBrush("NoBorder"))
 					.HAlign(HAlign_Fill)
 					.VAlign(VAlign_Fill)
 					.Padding(FMargin(0, 3))

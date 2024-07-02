@@ -3,7 +3,8 @@
 #pragma once
 
 
-#include "AssetData.h"
+#include "AssetRegistry/AssetData.h"
+#include "GameFramework/Actor.h"
 #include "ScopedTransaction.h"
 #include "Framework/MultiBox/MultiBoxExtender.h"
 #include "EdGraph/EdGraphPin.h"
@@ -26,6 +27,7 @@
 #include "IDetailCustomization.h"
 #include "IDetailsView.h"
 #include "IDetailRootObjectCustomization.h"
+#include "UObject/WeakObjectPtrTemplates.h"
 #include "Widgets/Docking/SDockTab.h"
 
 class FBrowserObject : public IDetailCustomization
@@ -77,7 +79,7 @@ protected:
 
 private:
 	void AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool bIsNewProjectWindow);
-	void CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor);
+	void CreateBrowseMenu(UToolMenu* ToolMenu, TWeakObjectPtr<AActor> ContextActor);
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
 	TSharedRef<SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);

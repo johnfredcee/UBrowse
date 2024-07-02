@@ -15,6 +15,7 @@
 #include "UBrowseNode.h"
 #include "SUBrowser.h"
 #include "SUBrowseNode.h"
+#include "UObject/WeakObjectPtrTemplates.h"
 
 const FName FUBrowseModule::UBrowseTabName("UBrowse");
 
@@ -110,13 +111,13 @@ void FUBrowseModule::AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool
 		{
 			// Use the actor under the cursor if available (e.g. right-click menu).
 			// Otherwise use the first selected actor if there's one (e.g. Actor pulldown menu or outliner).
-			AActor* ContextActor = LevelEditorMenuContext->HitProxyActor;
-			if (!ContextActor && GEditor->GetSelectedActorCount() != 0)
+			TWeakObjectPtr<AActor> ContextActor{LevelEditorMenuContext->HitProxyActor};
+			if (!ContextActor.IsValid() && GEditor->GetSelectedActorCount() != 0)
 			{
-				ContextActor = Cast<AActor>(GEditor->GetSelectedActors()->GetSelectedObject(0));
+				ContextActor = TWeakObjectPtr<AActor>{Cast<AActor>(GEditor->GetSelectedActors()->GetSelectedObject(0))};
 			}
 
-			if (ContextActor)
+			if (ContextActor.IsValid())
 			{
 				this->CreateBrowseMenu(ToolMenu, ContextActor);
 			}
@@ -130,18 +131,22 @@ void FUBrowseModule::AddSceneOutlinerMenu(TSharedPtr<SWindow> InRootWindow, bool
 
 }
 
-void FUBrowseModule::CreateBrowseMenu(UToolMenu* ToolMenu, AActor* ContextActor)
+void FUBrowseModule::CreateBrowseMenu(UToolMenu* ToolMenu, TWeakObjectPtr<AActor> ContextActor)
 {
+	AActor* ContextActorPtr = ContextActor.Get();
+	if (ContextActorPtr != nullptr)
+	{
 		const FName UBrowseSectionName = TEXT("UBrowse");
 		FToolMenuSection& Section = ToolMenu->AddSection(UBrowseSectionName, LOCTEXT("UBrowseSectionLabel", "UBrowse"));
 		FToolUIAction UBrowseOpenAction;
-		UBrowseOpenAction.ExecuteAction.BindLambda([this, ContextActor](const FToolMenuContext&){ this->ViewInUBrowse(ContextActor); });
+		UBrowseOpenAction.ExecuteAction.BindLambda([this, ContextActorPtr](const FToolMenuContext&){ this->ViewInUBrowse(ContextActorPtr); });
 		Section.AddMenuEntry(
 			FName("ActorUBrowse"),
 			LOCTEXT("UBrowseActor", "UBrowse"),
 			TAttribute<FText>(FText::FromString("UObject Browser")),
 			FSlateIcon(FUBrowseStyle::GetStyleSetName(), "UBrowse.ActionGo"), // TO DO -- need an icon
 			UBrowseOpenAction);
+	}
 }
 
 void FUBrowseModule::ShutdownModule()

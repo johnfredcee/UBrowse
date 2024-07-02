@@ -2,6 +2,7 @@
 #include "UBrowseStyle.h"
 #include "Slate/SlateGameResources.h"
 #include "Interfaces/IPluginManager.h"
+#include "Styling/AppStyle.h"
 
 TSharedPtr< FSlateStyleSet > FUBrowseStyle::StyleInstance = nullptr;
 
@@ -48,12 +49,12 @@ TSharedRef< FSlateStyleSet > FUBrowseStyle::Create()
 	Style->Set("UBrowse.ActionGo", new IMAGE_BRUSH(TEXT("UBrowseGo_40x"), Icon40x40));
 
 
-	// We need some colors from Editor Style & this is the only way to do this at the moment
-	const FSlateColor DefaultForeground = FEditorStyle::GetSlateColor("DefaultForeground");
-	const FSlateColor InvertedForeground = FEditorStyle::GetSlateColor("InvertedForeground");
-	const FSlateColor SelectorColor = FEditorStyle::GetSlateColor("SelectorColor");
-	const FSlateColor SelectionColor = FEditorStyle::GetSlateColor("SelectionColor");
-	const FSlateColor SelectionColor_Inactive = FEditorStyle::GetSlateColor("SelectionColor_Inactive");
+	// We need some colors from App Style 
+	const FSlateColor DefaultForeground = FAppStyle::GetSlateColor("DefaultForeground");
+	const FSlateColor InvertedForeground = FAppStyle::GetSlateColor("InvertedForeground");
+	const FSlateColor SelectorColor = FAppStyle::GetSlateColor("SelectorColor");
+	const FSlateColor SelectionColor = FAppStyle::GetSlateColor("SelectionColor");
+	const FSlateColor SelectionColor_Inactive = FAppStyle::GetSlateColor("SelectionColor_Inactive");
 
 	return Style;
 }
