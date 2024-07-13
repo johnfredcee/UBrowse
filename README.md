@@ -5,7 +5,7 @@ Unreal Engine plugin for browsing a graph of the low/level package/object struct
 It shows a great amount of detail about individual UObjects including the low level flags which is handy for debugging; it also lets you navigate among UOBJECTS and UCLASSES hypertext style. It's a wholly different view of the engine which is difficult to capture from a debugger. It shows a bit of structure among components : Owner / Owned relationships and among Blueprints (GeneratedClass / GeneratedBy).
 It's a useful tool for exploring the low level structure of the engine.
 
-It compiles against Unreal Engine 5.03.
+It compiles against Unreal Engine 5.4.2.
 
 It installs a menu item on the context menu and the world details menu as well as the toolbar.
 
