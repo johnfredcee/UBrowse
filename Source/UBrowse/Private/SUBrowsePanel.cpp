@@ -1,25 +1,29 @@
 
 #include "SUBrowsePanel.h"
-#include "Widgets/Text/STextBlock.h"
+
 #include "UBrowseGraph.h"
 #include "UBrowseSchema.h"
+#include "Widgets/Text/STextBlock.h"
+
 
 #define LOCTEXT_NAMESPACE "SUBrowsePanel"
 
 void SUBrowsePanel::Construct(const FArguments& InArgs)
 {
-	pBrowserGraph = NewObject< UBrowseGraph >( UBrowseGraph::StaticClass() );
-	pBrowserGraph->Schema = UBrowseSchema::StaticClass();
-	pBrowserGraph->AddToRoot();
-	OnNewObjectView.BindSP(this, &SUBrowsePanel::OnNewRootNode);
-	// appearance
-	// TODO: Name of object at root
-	AppearanceInfo.CornerText = LOCTEXT("UBrowseGraphCornerText", "UBROWSE");
-	// events
-	SGraphEditor::FGraphEditorEvents GraphEvents;
-	GraphEvents.OnNodeDoubleClicked = InArgs._OnNodeDoubleClicked;
-	pGraphEditor = SNew(SGraphEditor)
-		.GraphToEdit(pBrowserGraph)
+    BrowserGraphPtr = NewObject<UBrowseGraph>(UBrowseGraph::StaticClass());
+    BrowserGraphPtr->Schema = UBrowseSchema::StaticClass();
+    BrowserGraphPtr->AddToRoot();
+    OnNewObjectView.BindSP(this, &SUBrowsePanel::OnNewRootNode);
+    // appearance
+    // TODO: Name of object at root
+    AppearanceInfo.CornerText = LOCTEXT("UBrowseGraphCornerText", "UBROWSE");
+    // events
+    SGraphEditor::FGraphEditorEvents GraphEvents;
+    GraphEvents.OnNodeDoubleClicked = InArgs._OnNodeDoubleClicked;
+
+    // clang-format off
+	GraphEditorPtr = SNew(SGraphEditor)
+		.GraphToEdit(BrowserGraphPtr)
 		.IsEditable(false) 
 		.TitleBar(SNew(SBorder).HAlign(HAlign_Center)
 		[
@@ -30,29 +34,29 @@ void SUBrowsePanel::Construct(const FArguments& InArgs)
 		.Appearance(this, &SUBrowsePanel::GetAppearanceInfo);
 		ChildSlot
 		[
-			pGraphEditor.ToSharedRef()
+			GraphEditorPtr.ToSharedRef()
 		];
-	pBrowserGraph->RefreshGraph();
+    // clang-format on
+    BrowserGraphPtr->RefreshGraph();
 }
 
 /*
 void SUBrowsePanel::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
-	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+    SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 }
 */
 
 FGraphAppearanceInfo SUBrowsePanel::GetAppearanceInfo() const
 {
-	return AppearanceInfo;
+    return AppearanceInfo;
 }
 
 void SUBrowsePanel::OnNewRootNode(TSharedPtr<FBrowserObject> InObject)
 {
-	AppearanceInfo.CornerText = FText::FromString(GetNameSafe(InObject->Object.Get()));
-	AppearanceInfo.ReadOnlyText = FText::FromString(GetNameSafe(InObject->Object.Get()));
-	pBrowserGraph->RefreshGraph(InObject->Object.Get());
+    AppearanceInfo.CornerText = FText::FromString(GetNameSafe(InObject->Object.Get()));
+    AppearanceInfo.ReadOnlyText = FText::FromString(GetNameSafe(InObject->Object.Get()));
+    BrowserGraphPtr->RefreshGraph(InObject->Object.Get());
 }
-
 
 #undef LOCTEXT_NAMESPACE

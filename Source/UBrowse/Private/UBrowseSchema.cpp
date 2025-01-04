@@ -1,77 +1,81 @@
-// 
-
+//
 
 #include "UBrowseSchema.h"
-#include "UBrowse.h"
-#include "UBrowseGraph.h"
+
+#include "ConnectionDrawingPolicy.h"
+#include "EdGraph/EdGraphNode.h"
 #include "Editor.h"
-#include "Widgets/SCompoundWidget.h"
+#include "GraphEditor.h"
+#include "GraphEditorActions.h"
+#include "SlateOptMacros.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "ToolMenu.h"
+#include "UBrowse.h"
+#include "UBrowseEditorCommands.h"
+#include "UBrowseGraph.h"
+#include "UBrowseNode.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
-#include "ToolMenu.h"
-#include "EdGraph/EdGraphNode.h"
-#include "GraphEditorActions.h"
-#include "GraphEditor.h"
-#include "Subsystems/AssetEditorSubsystem.h"
-#include "ConnectionDrawingPolicy.h"
-#include "UBrowseNode.h"
-#include "UBrowseEditorCommands.h"
-#include "SlateOptMacros.h"
+#include "Widgets/SCompoundWidget.h"
+
 
 #define LOCTEXT_NAMESPACE "UBrowseSchema"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 class SUBrowseContextMenu : public SCompoundWidget
 {
-public:
+  public:
+    // clang-format off
 	SLATE_BEGIN_ARGS(SUBrowseContextMenu) {}
 	SLATE_END_ARGS()
+    // clang-format on
 
-		/**
-		* Construct the widget
-		*
-		* @param InArgs   Declaration from which to construct the widget.
-		*/
-	void Construct(const FArguments& InArgs)
-	{
-
+    /**
+     * Construct the widget
+     *
+     * @param InArgs   Declaration from which to construct the widget.
+     */
+    void Construct(const FArguments& InArgs)
+    {
+        // clang-format off
 		this->ChildSlot
-			[
-				SNew(SBorder)
-				.BorderImage(FCoreStyle::Get().GetBrush("Menu.Background"))
+		[
+			SNew(SBorder)
+			.BorderImage(FCoreStyle::Get().GetBrush("Menu.Background"))
 			.Padding(FMargin(5))
 			[
 				SNew(SVerticalBox)
 				+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("MembersButton", "Members"))
-			.ToolTipText(LOCTEXT("MemersButtonToolTip", "Show members graph."))
+				.AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("MembersButton", "Members"))
+					.ToolTipText(LOCTEXT("MembersButtonToolTip", "Show members graph."))
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SAssignNew(PopupAnchor, SMenuAnchor)
+					.Placement(MenuPlacement_MenuRight)
+					.OnGetMenuContent(this, &SUBrowseContextMenu::OnGetContent)
+					[
+						SNew(SButton)
+						.Text(LOCTEXT("InstancesButton", "List Instances"))
+						.ToolTipText(LOCTEXT("InstancesTooltip", "List of Instances of this class/object."))
+						.OnClicked(this, &SUBrowseContextMenu::OpenSubmenu)
+					]
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SButton)
+					.Text(LOCTEXT("ClassHierarchyButton", "Class Hierarchy"))
+					.ToolTipText(LOCTEXT("ClassHierarchyButton", "Show Class Hierarchy Graph related to this instance/class"))
+				]
 			]
-		+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SAssignNew(PopupAnchor, SMenuAnchor)
-				.Placement(MenuPlacement_MenuRight)
-			.OnGetMenuContent(this, &SUBrowseContextMenu::OnGetContent)
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("InstancesButton", "List Instances"))
-			.ToolTipText(LOCTEXT("InstancesTooltip", "List of Instances of this class/object."))
-			.OnClicked(this, &SUBrowseContextMenu::OpenSubmenu)
-			]
-			]
-		+ SVerticalBox::Slot()
-			.AutoHeight()
-			[
-				SNew(SButton)
-				.Text(LOCTEXT("ClassHierarchyButton", "Class Hierarchy"))
-			.ToolTipText(LOCTEXT("ClassHierarchyButton", "Show Class Hierarchy Graph related to this instance/class"))
-			]
-			]
-			];
+		];
+	// clang-format ON
 	}
 
 	TSharedPtr<SMenuAnchor> PopupAnchor;

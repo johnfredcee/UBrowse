@@ -7,23 +7,22 @@
 #include "UBrowseNode.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EdGraphUtilities.h"
+#include "UBrowseSchema.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseGraph"
 
 UBrowseGraph::UBrowseGraph(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-
+    Schema = UBrowseSchema::StaticClass();
 }
 
 
 void UBrowseGraph::RefreshGraph(UObject* pRoot)
 {
-	constexpr int32 nodeYSpacing = 150;
-	constexpr int32 nodeYStart = 50;
-	constexpr int32 nodeXPos = 50;
+    constexpr int32 nodeYStart = 50;
 
-	/* clear previous graph */
+    /* clear previous graph */
 	RemoveAllNodes();
 
 	/* Walk the outer chain */
@@ -41,8 +40,13 @@ void UBrowseGraph::RefreshGraph(UObject* pRoot)
 	int32 OuterCount = Outers.Num() - 1;
 	UBrowseNode*  ThisNode; 
 	UBrowseNode*  PrevNode = nullptr;
+    
 	for (int32 i = OuterCount; i >= 0; i--) {
-		FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
+
+	    constexpr int32 nodeXPos = 50;
+        constexpr int32 nodeYSpacing = 150;
+	    
+        FGraphNodeCreator<UBrowseNode> NodeBuilder(*this);
 		UObject *NodeObject = Outers[i];
 		ThisNode = NodeBuilder.CreateNode(false);
 		ThisNode->SetupNode(FIntPoint(nodeXPos, NodeY), NodeObject);

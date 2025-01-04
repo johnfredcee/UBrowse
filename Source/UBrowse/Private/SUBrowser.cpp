@@ -825,66 +825,12 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 
 	struct ObjectFlagBuilder
 	{
-		/**
-		* Maps object flag to human-readable string.
-		*/
-		class FObjectFlag
-		{
-		public:
-			EObjectFlags	ObjectFlag;
-			const TCHAR*	FlagName;
-			FObjectFlag(EObjectFlags InObjectFlag, const TCHAR* InFlagName)
-				: ObjectFlag(InObjectFlag)
-				, FlagName(InFlagName)
-			{}
-		};
 
-		/**
-		* Initializes the singleton list of object flags.
-		*/
-		static TArray<FObjectFlag> PrivateInitObjectFlagList()
-		{
-			TArray<FObjectFlag> ObjectFlagList;
-#ifdef	DECLARE_OBJECT_FLAG
-#error DECLARE_OBJECT_FLAG already defined
-#else
-#define DECLARE_OBJECT_FLAG( ObjectFlag ) ObjectFlagList.Add( FObjectFlag( RF_##ObjectFlag, TEXT(#ObjectFlag) ) );
-			DECLARE_OBJECT_FLAG(ClassDefaultObject)
-			DECLARE_OBJECT_FLAG(DefaultSubObject)
-			DECLARE_OBJECT_FLAG(LoadCompleted)
-			DECLARE_OBJECT_FLAG(ArchetypeObject)
-			DECLARE_OBJECT_FLAG(Transactional)
-			DECLARE_OBJECT_FLAG(Public)
-			DECLARE_OBJECT_FLAG(TagGarbageTemp)
-			DECLARE_OBJECT_FLAG(NeedLoad)
-			DECLARE_OBJECT_FLAG(Transient)
-			DECLARE_OBJECT_FLAG(Standalone)
-			DECLARE_OBJECT_FLAG(BeginDestroyed)
-			DECLARE_OBJECT_FLAG(FinishDestroyed)
-			DECLARE_OBJECT_FLAG(NeedPostLoad)
-#undef DECLARE_OBJECT_FLAG
-#endif
-			return ObjectFlagList;
-		}
-
-		/**
-		* Dumps object flags from the selected objects to debugf.
-		*/
 		static FString PrintObjectFlags(UObject* Object)
 		{
-			static TArray<FObjectFlag> SObjectFlagList = PrivateInitObjectFlagList();
-
 			if (Object)
 			{
-				FString Buf;
-				for (int32 FlagIndex = 0; FlagIndex < SObjectFlagList.Num(); ++FlagIndex)
-				{
-					const FObjectFlag& CurFlag = SObjectFlagList[FlagIndex];
-					if (Object->HasAnyFlags(CurFlag.ObjectFlag))
-					{
-						Buf += FString::Printf(TEXT("%s "), CurFlag.FlagName);
-					}
-				}
+				FString Buf = LexToString(Object->GetFlags());
 				return Buf;
 			}
 			return TEXT("None");
@@ -966,6 +912,8 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 		for (TFieldIterator<FProperty> PropIt(Class); PropIt; ++PropIt)
 		{
 			FProperty* Property = *PropIt;
+			TArray<const TCHAR*> PropertyFlags =  ParsePropertyFlags(Property->GetPropertyFlags());
+			FString PropertyFlagsText = FString::Join(PropertyFlags, TEXT(","));
 			auto CPPName = Property->GetNameCPP();
 			auto CPPType = Property->GetCPPType();
 			auto PropertyName = Property->GetName();
@@ -982,19 +930,26 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 				if (ObjectProperty != nullptr) 
 				{
 					UObject* PropertyObject = ObjectProperty->GetObjectPropertyValue(SourceAddr);
-					ClassBuilder->BuildObjectRow(CPPType, PropertyName, UnrealValue, CPPValue, PropertyObject);								
+					if (PropertyObject != nullptr)
+					{
+						EObjectFlags ObjectFlags = PropertyObject->GetFlags();
+						FString ObjectFlagsText = LexToString(ObjectFlags);
+						PropertyFlagsText.Append("\n");
+						PropertyFlagsText.Append(ObjectFlagsText);	
+					}
+					ClassBuilder->BuildObjectRow(CPPType, PropertyName, UnrealValue, PropertyFlagsText, PropertyObject);								
 				}
 				else if (StructProperty != nullptr)
 				{
-					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, CPPValue);
+					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, PropertyFlagsText);
 				}
 				else if (ArrayProperty != nullptr)
 				{
-					ClassBuilder->BuildArrayRow(CPPType, PropertyName, UnrealValue, CPPValue, Obj, ArrayProperty);												
+					ClassBuilder->BuildArrayRow(CPPType, PropertyName, UnrealValue, PropertyFlagsText, Obj, ArrayProperty);												
 				}						
 				else
 				{
-					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, CPPValue); 
+					ClassBuilder->BuildSimpleRow(CPPType, PropertyName, UnrealValue, PropertyFlagsText); 
 				}					
 			}
 		}

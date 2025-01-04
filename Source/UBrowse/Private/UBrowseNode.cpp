@@ -3,6 +3,7 @@
 #include "UBrowseGraph.h"
 #include "UObject/ObjectMacros.h"
 
+// TO DO : Mebby use LexToString
 namespace {
 	FString GetFlagsAsText(EObjectFlags Param)
 	{

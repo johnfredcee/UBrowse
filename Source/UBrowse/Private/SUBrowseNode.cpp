@@ -1,6 +1,8 @@
 
 #include "SUBrowseNode.h"
 #include "Engine/Blueprint.h"
+#include "Engine/BlueprintGeneratedClass.h"
+#include "Engine/Level.h"
 #include "GraphEditorSettings.h"
 #include "EdGraph/EdGraphNode.h"
 #include "EditorClassUtils.h"

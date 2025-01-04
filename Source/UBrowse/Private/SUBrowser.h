@@ -1,144 +1,142 @@
 
 #pragma once
 
-#include "IDetailsView.h"
 #include "DetailsViewArgs.h"
-#include "Widgets/SWidget.h"
-#include "Widgets/SCompoundWidget.h"
+#include "IDetailsView.h"
+#include "SUBrowsePanel.h"
+#include "UBrowse.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
+#include "Widgets/SCompoundWidget.h"
+#include "Widgets/SWidget.h"
 #include "Widgets/Views/SHeaderRow.h"
 #include "Widgets/Views/SListView.h"
-#include "UBrowse.h"
-#include "SUBrowsePanel.h"
-
 
 class IDetailsView;
 
 namespace EQuerySortMode
 {
-	enum Type
-	{
-		ByID,
-		ByType,
-		ByNumber
-	};
+enum Type
+{
+    ByID,
+    ByType,
+    ByNumber
+};
 }
 
 struct FUBrowserPanel
 {
-
-	TArray< TSharedPtr<FBrowserObject> > LiveObjects;
-	TSharedPtr<SUBrowsePanel>            BrowsePanel;
+    TArray<TSharedPtr<FBrowserObject> > LiveObjects;
+    TSharedPtr<SUBrowsePanel> BrowsePanel;
 };
 
-
-class SUBrowser :	public SCompoundWidget
+class SUBrowser : public SCompoundWidget
 {
-	friend FBrowserObject;
-public:
-	SLATE_BEGIN_ARGS(SUBrowser) { }
-	SLATE_END_ARGS()
+    friend FBrowserObject;
 
-	/**
-	* Construct this widget
-	*
-	* @param InArgs The declaration data for this widget.
-	*/
-	void Construct(const FArguments& InArgs);
+  public:
+    SLATE_BEGIN_ARGS(SUBrowser)
+    {
+    }
+    SLATE_END_ARGS()
 
-	void RefreshList();
+    /**
+     * Construct this widget
+     *
+     * @param InArgs The declaration data for this widget.
+     */
+    void Construct(const FArguments& InArgs);
 
-	void ViewUObject(UObject* InObjectToView);
+    void RefreshList();
 
+    void ViewUObject(UObject* InObjectToView);
 
-private:
+  private:
+    DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
 
-	DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
+    FOnNewObjectView OnNewObjectView;
 
-	FOnNewObjectView OnNewObjectView;
+    void OnObjectListSelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type SelectInfo);
 
-	void OnObjectListSelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type SelectInfo);
+    void OnNewHostTextCommited(const FText& InText, ETextCommit::Type InCommitType);
 
-	void OnNewHostTextCommited(const FText& InText, ETextCommit::Type InCommitType);
+    TSharedRef<ITableRow> OnGenerateObjectListRow(
+        TSharedPtr<FBrowserObject> ObjectPtr, const TSharedRef<STableViewBase>& OwnerTable);
 
-	TSharedRef<ITableRow> OnGenerateObjectListRow(TSharedPtr<FBrowserObject> ObjectPtr, const TSharedRef<STableViewBase>& OwnerTable);
+    TSharedRef<ITableRow> HandlePropertyGenerateRow(
+        TSharedPtr<FBrowserObject> ObjectPtr, const TSharedRef<STableViewBase>& OwnerTable);
 
-	TSharedRef<ITableRow> HandlePropertyGenerateRow(TSharedPtr<FBrowserObject> ObjectPtr, const TSharedRef<STableViewBase>& OwnerTable);
+    FText GetFilterClassText() const;
 
-	FText GetFilterClassText() const;
+    FReply OnClassSelectionClicked();
 
-	FReply OnClassSelectionClicked();
+    FReply OnCollectGarbage();
 
-	FReply OnCollectGarbage();
+    void AddBoolFilter(FMenuBuilder& MenuBuilder, FText Text, FText ToolTip, bool* BoolOption);
 
-	void AddBoolFilter(FMenuBuilder& MenuBuilder, FText Text, FText ToolTip, bool* BoolOption);
+    TSharedRef<SWidget> MakeFilterMenu();
 
-	TSharedRef<SWidget> MakeFilterMenu();
+    void OnNodeDoubleClicked(class UEdGraphNode* Node);
 
-	void OnNodeDoubleClicked(class UEdGraphNode* Node);
+    void OnGetChildrenForTree(TWeakObjectPtr<UObject> InClass, TArray<TWeakObjectPtr<UObject> >& OutChildren);
 
-	void OnGetChildrenForTree(TWeakObjectPtr<UObject> InClass, TArray< TWeakObjectPtr<UObject> >& OutChildren);
+    TSharedRef<ITableRow> OnGenerateHistoryRow(TSharedPtr<FBrowserObject> InItem, const TSharedRef<STableViewBase>& OwnerTable);
 
-	TSharedRef<ITableRow> OnGenerateHistoryRow(TSharedPtr<FBrowserObject> InItem, const TSharedRef<STableViewBase>& OwnerTable);
+    void OnHistorySelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type /*SelectInfo*/);
 
-	void  OnHistorySelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type /*SelectInfo*/);
+    void OnSortByChanged(
+        const EColumnSortPriority::Type SortPriority, const FName& ColumnName, const EColumnSortMode::Type NewSortMode);
 
-	void OnSortByChanged(const EColumnSortPriority::Type SortPriority, const FName& ColumnName, const EColumnSortMode::Type NewSortMode);
+    EColumnSortMode::Type GetSortMode() const;
 
-	EColumnSortMode::Type GetSortMode() const;
+    TSharedPtr<SWidget> GetTreeContextMenu();
 
-	TSharedPtr<SWidget> GetTreeContextMenu();
+    void AddObjectToHistory(TSharedPtr<FBrowserObject> Item);
 
-	void AddObjectToHistory(TSharedPtr<FBrowserObject> Item);
+    void PopulateHistoryList();
 
-	void PopulateHistoryList();
-	
-	FUBrowserPanel& GetCurrentBrowserPanel();
+    FUBrowserPanel& GetCurrentBrowserPanel();
 
-	const TArray< TSharedPtr<FBrowserObject> >& GetLiveObjects();
+    const TArray<TSharedPtr<FBrowserObject> >& GetLiveObjects();
 
-	const TArray< TSharedPtr< FBrowserObject > >& GetCurrentHistoryList();
+    const TArray<TSharedPtr<FBrowserObject> >& GetCurrentHistoryList();
 
-	void OnLevelActorAdded(AActor* InActor);
-	void OnLevelActorDeleted(AActor* InActor);
-	void OnLevelActorListChanged();
-	void OnPostGarbageCollect();
-	
-	// Filters
-	FText FilterText;
-	FString FilterString;
-	UClass* FilterClass;
-	bool bShouldIncludeClassDefaultObjects;	
-	bool bShouldIncludeDefaultSubObjects;
-	bool bShouldIncludeArchetypeObjects;
-	bool bOnlyListRootObjects;
-	bool bOnlyListGCObjects;
-	bool bIncludeTransient;
+    void OnLevelActorAdded(AActor* InActor);
+    void OnLevelActorDeleted(AActor* InActor);
+    void OnLevelActorListChanged();
+    void OnPostGarbageCollect();
 
-	// Holds the widget switcher.
-	TSharedPtr<SWidgetSwitcher> UBrowseSwitcher;
+    // Filters
+    FText FilterText;
+    FString FilterString;
+    UClass* FilterClass;
+    bool bShouldIncludeClassDefaultObjects;
+    bool bShouldIncludeDefaultSubObjects;
+    bool bShouldIncludeArchetypeObjects;
+    bool bOnlyListRootObjects;
+    bool bOnlyListGCObjects;
+    bool bIncludeTransient;
 
-	/* List of objects of selectable class - used to zoom in on what's intersting */
-	TSharedPtr< SListView< TSharedPtr<FBrowserObject> > > ObjectListView;
+    // Holds the widget switcher.
+    TSharedPtr<SWidgetSwitcher> UBrowseSwitcher;
 
-	/* List of objects we have browsed */
-	TSharedPtr< SListView< TSharedPtr< FBrowserObject > > >  ObjectHistoryView;
+    /* List of objects of selectable class - used to zoom in on what's intersting */
+    TSharedPtr<SListView<TSharedPtr<FBrowserObject> > > ObjectListView;
 
-	/* Customized detail view we use for examining properties */
-	TSharedPtr<IDetailsView> PropertyView;
+    /* List of objects we have browsed */
+    TSharedPtr<SListView<TSharedPtr<FBrowserObject> > > ObjectHistoryView;
 
-	/* Graph panels for visualising structure (more than one of them - switched by history browsing) */
-	TArray< TSharedPtr<FUBrowserPanel> > BrowserPanels;
+    /* Customized detail view we use for examining properties */
+    TSharedPtr<IDetailsView> PropertyView;
 
-	/* History of objects browsed */
-	TArray< TSharedPtr< FBrowserObject >  > History;
+    /* Graph panels for visualising structure (more than one of them - switched by history browsing) */
+    TArray<TSharedPtr<FUBrowserPanel> > BrowserPanels;
 
-	/** Current way we are sorting queries */
-	EQuerySortMode::Type			SortBy;
+    /* History of objects browsed */
+    TArray<TSharedPtr<FBrowserObject> > History;
 
-	/** Current way we are setting ID sort direction */
-	EColumnSortMode::Type			SortDirection;
+    /** Current way we are sorting queries */
+    EQuerySortMode::Type SortBy;
 
+    /** Current way we are setting ID sort direction */
+    EColumnSortMode::Type SortDirection;
 };
-	
-

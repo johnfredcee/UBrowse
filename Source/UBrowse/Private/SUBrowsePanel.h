@@ -1,38 +1,39 @@
 #pragma once
 
-
-#include "UBrowse.h"
 #include "GraphEditor.h"
+#include "UBrowse.h"
 
 class UBrowseGraph;
 
 class SUBrowsePanel : public SCompoundWidget
 {
 public:
-	DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
+    DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
 
-	SLATE_BEGIN_ARGS(SUBrowsePanel) { }
-		SLATE_EVENT(FSingleNodeEvent, OnNodeDoubleClicked )
-	SLATE_END_ARGS()
+    // clang-format off
+    SLATE_BEGIN_ARGS(SUBrowsePanel) {}
+        SLATE_EVENT(FSingleNodeEvent, OnNodeDoubleClicked)
+    SLATE_END_ARGS()
+    // clang-format on
 
-	FOnNewObjectView OnNewObjectView;
+    FOnNewObjectView OnNewObjectView;
 
-	FSingleNodeEvent OnNodeDoubleClicked;
-	
-	/**
-	* Construct this widget
-	*
-	* @param InArgs The declaration data for this widget.
-	*/
-	void Construct(const FArguments& InArgs);
+    FSingleNodeEvent OnNodeDoubleClicked;
 
-	/* Called when a new root node is selected */
-	void OnNewRootNode(TSharedPtr<FBrowserObject> InObject);
+    /**
+     * Construct this widget
+     *
+     * @param InArgs The declaration data for this widget.
+     */
+    void Construct(const FArguments& InArgs);
 
-	FGraphAppearanceInfo GetAppearanceInfo() const;
+    /* Called when a new root node is selected */
+    void OnNewRootNode(TSharedPtr<FBrowserObject> InObject);
+
+    FGraphAppearanceInfo GetAppearanceInfo() const;
 
 private:
-	FGraphAppearanceInfo 	 AppearanceInfo;
-	TSharedPtr<SGraphEditor> pGraphEditor;
-	UBrowseGraph 			*pBrowserGraph;
+    FGraphAppearanceInfo AppearanceInfo;
+    TSharedPtr<SGraphEditor> GraphEditorPtr;
+    UBrowseGraph* BrowserGraphPtr = nullptr;
 };
