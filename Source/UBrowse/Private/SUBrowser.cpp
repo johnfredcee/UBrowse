@@ -635,23 +635,22 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 				FString CPPValue, UnrealValue, IndexText;
 				if (ObjectArrayValueProperty == nullptr)
 				{
-					ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
-					ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem_Direct(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem_Direct(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
 					IndexText = FString::Printf(TEXT("[%d]"), i);
 					BuildSimpleRow(NameTooltipText, IndexText, UnrealValue, CPPValue);
 				}
 				else
 				{
 					UObject* ArrayElement = ObjectArrayValueProperty->GetObjectPropertyValue(ArrayHelper.GetRawPtr(i));
-					ArrayValueProperty->ExportTextItem(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
-					ArrayValueProperty->ExportTextItem(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem_Direct(CPPValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
+					ArrayValueProperty->ExportTextItem_Direct(UnrealValue, ArrayHelper.GetRawPtr(i), ArrayHelper.GetRawPtr(i), Context, PPF_BlueprintDebugView);
 					auto CPPType = ArrayValueProperty->GetCPPType();
 					BuildObjectRow(CPPType, IndexText, UnrealValue, CPPValue, ArrayElement);								
 				}
 				
 			}
 			Group = OldGroup;
-
 		}
 		
 
