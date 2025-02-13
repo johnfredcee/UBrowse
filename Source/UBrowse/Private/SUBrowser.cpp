@@ -3,11 +3,14 @@
 #include "SUBrowser.h"
 #include "LevelEditor.h"
 #include "HAL/FileManager.h"
+#include "Types/SlateEnums.h"
 #include "UBrowse.h"
 #include "UObject/NameTypes.h"
 #include "UObject/PropertyPortFlags.h"
 #include "UObject/UObjectGlobals.h"
+#include "UObject/UObjectIterator.h"
 #include "UObject/WeakObjectPtrTemplates.h"
+#include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SWidgetSwitcher.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Input/SEditableTextBox.h"
@@ -33,12 +36,9 @@
 #include "ClassViewerModule.h"
 #include "Kismet2/SClassPickerDialog.h"
 #include "PropertyEditorModule.h"
-#include "UBrowseStyle.h"
-#include "UBrowseCommands.h"
 #include "UBrowseNode.h"
 #include "SUBrowserTableRow.h"
 #include "SUBrowsePropertyTableRow.h"
-#include "SUBrowserClassItem.h"
 #include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "SUBrowserMenu"
@@ -105,32 +105,55 @@ void SUBrowser::Construct(const FArguments& InArgs)
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
+					.Padding(5.0f)
 					.AutoWidth()
+					.VAlign(EVerticalAlignment::VAlign_Center)
 					[
 						SNew(STextBlock)
 						.Text(LOCTEXT("ClassName", "Class Filter"))
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
+					.Padding(5.0f)
 					[
 						SNew(SButton)
 						.OnClicked(this, &SUBrowser::OnClassSelectionClicked)
 						[
 							SNew(STextBlock)
 							.Text(this, &SUBrowser::GetFilterClassText)
-							.ToolTipText(LOCTEXT("ClassName", "Class Filter"))
+							.ToolTipText(LOCTEXT("ClassNameFilter", "Class Filter"))
 						]
 					]
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					.Padding(5.0f)
+					.VAlign(EVerticalAlignment::VAlign_Center)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("ObjectNameFilter", "Object Name Filter"))
+					]
+					+ SHorizontalBox::Slot()		
 					.FillWidth(0.8f)
+					.Padding(5.0f)
 					[
 						SNew(SEditableTextBox)
 						.HintText(LOCTEXT("ObjectName", "Object Name Filter"))
 						.OnTextCommitted(this, &SUBrowser::OnNewHostTextCommited)
 						.OnTextChanged(this, &SUBrowser::OnNewHostTextCommited, ETextCommit::Default)
 					]
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
+					.Padding(5.0f)					
 					[
 						SNew(SComboButton)
 						.ComboButtonStyle(FAppStyle::Get(), "GenericFilters.ComboButtonStyle")
@@ -148,7 +171,6 @@ void SUBrowser::Construct(const FArguments& InArgs)
 							[
 								SNew(STextBlock)
 								.TextStyle(FAppStyle::Get(), "GenericFilters.TextStyle")
-								.Font(FAppStyle::Get().GetFontStyle("FontAwesome.9"))
 								.Text(FEditorFontGlyphs::Filter)
 							]
 							+ SHorizontalBox::Slot()
@@ -160,9 +182,11 @@ void SUBrowser::Construct(const FArguments& InArgs)
 								.Text(LOCTEXT("Filters", "Filters"))
 							]
 						]
+
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
+					.Padding(5.0f)
 					[
 						SNew(SButton)
 						.OnClicked(this, &SUBrowser::OnCollectGarbage)

@@ -1,5 +1,6 @@
 
 #include "UBrowseEditorCommands.h"
+#include "Styling/AppStyle.h"
 
 #define LOCTEXT_NAMESPACE "UBrowseEditorCommands"
 
@@ -7,7 +8,7 @@ FUBrowseEditorCommands::FUBrowseEditorCommands() : TCommands<FUBrowseEditorComma
 	"UBrowseEditorCommands",
 	NSLOCTEXT("Contexts", "UBrowseEditorCommands", "UObject Browsing"),
 	NAME_None, 
-	FEditorStyle::GetStyleSetName())
+	FAppStyle::GetAppStyleSetName())
 {
 }
 
