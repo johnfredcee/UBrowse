@@ -173,7 +173,7 @@ void FUBrowseModule::ShutdownModule()
 TSharedRef<SDockTab> FUBrowseModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
 {
 	const TSharedPtr<SDockTab>  DockTab = SNew(SDockTab).TabRole(ETabRole::MajorTab);
-	TSharedRef<SUBrowser> Browser = SNew(SUBrowser);
+	TSharedRef<SUBrowser> Browser = SNew(SUBrowser).bShouldIncludeDefaultSubObjects(true).bShouldIncludeClassDefaultObjects(true);
 	DockTab->SetContent(Browser);
 	Browser->RefreshList();
 	return DockTab.ToSharedRef();

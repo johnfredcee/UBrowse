@@ -34,9 +34,13 @@ class SUBrowser : public SCompoundWidget
     friend FBrowserObject;
 
   public:
-    SLATE_BEGIN_ARGS(SUBrowser)
-    {
-    }
+    SLATE_BEGIN_ARGS(SUBrowser) {}
+    SLATE_ARGUMENT(bool, bShouldIncludeClassDefaultObjects)
+    SLATE_ARGUMENT(bool, bShouldIncludeDefaultSubObjects)
+    SLATE_ARGUMENT(bool, bShouldIncludeArchetypeObjects)
+    SLATE_ARGUMENT(bool, bOnlyListRootObjects)
+    SLATE_ARGUMENT(bool, bOnlyListGCObjects)
+    SLATE_ARGUMENT(bool, bIncludeTransient)
     SLATE_END_ARGS()
 
     /**
@@ -54,6 +58,13 @@ class SUBrowser : public SCompoundWidget
     DECLARE_DELEGATE_OneParam(FOnNewObjectView, TSharedPtr<FBrowserObject>);
 
     FOnNewObjectView OnNewObjectView;
+
+    bool bShouldIncludeClassDefaultObjects;
+    bool bShouldIncludeDefaultSubObjects;
+    bool bShouldIncludeArchetypeObjects;
+    bool bOnlyListRootObjects;
+    bool bOnlyListGCObjects;
+    bool bIncludeTransient;
 
     void OnObjectListSelectionChanged(TSharedPtr<FBrowserObject> InItem, ESelectInfo::Type SelectInfo);
 
@@ -109,13 +120,7 @@ class SUBrowser : public SCompoundWidget
     FText FilterText;
     FString FilterString;
     UClass* FilterClass;
-    bool bShouldIncludeClassDefaultObjects;
-    bool bShouldIncludeDefaultSubObjects;
-    bool bShouldIncludeArchetypeObjects;
-    bool bOnlyListRootObjects;
-    bool bOnlyListGCObjects;
-    bool bIncludeTransient;
-
+  
     // Holds the widget switcher.
     TSharedPtr<SWidgetSwitcher> UBrowseSwitcher;
 

@@ -46,12 +46,12 @@
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SUBrowser::Construct(const FArguments& InArgs)
 {
-	bShouldIncludeClassDefaultObjects = false; 
-	bShouldIncludeDefaultSubObjects = false;
-	bShouldIncludeArchetypeObjects = false;
-	bOnlyListRootObjects = false;
-	bIncludeTransient = false;
-	bOnlyListGCObjects = false;
+	bShouldIncludeClassDefaultObjects = InArgs._bShouldIncludeClassDefaultObjects; 
+	bShouldIncludeDefaultSubObjects = InArgs._bShouldIncludeDefaultSubObjects;
+	bShouldIncludeArchetypeObjects = InArgs._bShouldIncludeArchetypeObjects;
+	bOnlyListRootObjects = InArgs._bOnlyListRootObjects;
+	bIncludeTransient = InArgs._bIncludeTransient;
+	bOnlyListGCObjects = InArgs._bOnlyListGCObjects;
 
 	SWidget::SetTag(FName(TEXT("UBrowseTag")));
 	SortBy = EQuerySortMode::ByID;
