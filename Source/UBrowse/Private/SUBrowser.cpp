@@ -736,7 +736,9 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 				return FReply::Handled();
 			};
 
-
+			UClass* ContextClass = Context != nullptr ? Context->GetClass() : nullptr;
+			FSlateIcon ClassIcon = FSlateIconFinder::FindIconForClass(UClass::StaticClass(), "ClassIcon.Object");
+			FSlateIcon InstanceIcon = ContextClass != nullptr ? FSlateIconFinder::FindIconForClass(Context->GetClass(), "ClassIcon.Object") : ClassIcon; 
 			auto IsEnabledLambda = [Context]()->bool
 			{
 				return Context != nullptr;
@@ -770,20 +772,30 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 						.AutoWidth()
 						[
 							SNew(SButton)
+							.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 							.OnClicked_Lambda(OnClickedClassLambda)
 							.IsEnabled_Lambda(IsEnabledLambda)
-							.Text(FText::FromString(TEXT(".")))
-							.ToolTipText(FText::FromString(IsEnabledLambda() ? *FString::Printf(TEXT("Class %s"), *GetNameSafe(Context->GetClass())) :  TEXT("None")))
+							.ToolTipText(FText::FromString(IsEnabledLambda() ? *FString::Printf(TEXT("Class %s"), *GetNameSafe(ContextClass)) :  TEXT("None")))
+							[
+								SNew(SImage)
+								.Image(ClassIcon.GetIcon())
+								.ColorAndOpacity(FSlateColor::UseForeground())
+							]
 						]
 						+ SHorizontalBox::Slot()
 						.Padding(5.f, 0.f, 5.0f, 0.f)
 						.AutoWidth()
 						[
 							SNew(SButton)
+							.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 							.OnClicked_Lambda(OnClickedInstanceLambda)
 							.IsEnabled_Lambda(IsEnabledLambda)
-							.Text(FText::FromString(TEXT("...")))
 							.ToolTipText(FText::FromString(*FString::Printf(TEXT("Instance %s"), *ValueText)))
+							[
+								SNew(SImage)
+								.Image(InstanceIcon.GetIcon())
+								.ColorAndOpacity(FSlateColor::UseForeground())
+							]
 						]
 						+ SHorizontalBox::Slot()
 						.AutoWidth()
@@ -862,9 +874,10 @@ void FBrowserObject::CustomizeDetails(IDetailLayoutBuilder& Layout)
 
 	const IDetailsView*  View = Layout.GetDetailsView();
 	const TArray<TWeakObjectPtr<UObject>> Objects = Layout.GetDetailsView()->GetSelectedObjects();
-	IDetailCategoryBuilder& ObjectCategory = Layout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Important);
+	IDetailCategoryBuilder& ObjectCategory = Layout.EditCategory("UObject", FText::GetEmpty(), ECategoryPriority::Variable);
+	ObjectCategory.SetSortOrder(0);
 	check(Objects.Num() > 0);
-	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), true, true);
+	IDetailGroup& ObjectGroup = ObjectCategory.AddGroup("UObject", LOCTEXT("UObjectProperties", "Object  Properties"), false, true);
 	for (auto iObject : Objects)
 	{
 		bool bIsClass = false;
